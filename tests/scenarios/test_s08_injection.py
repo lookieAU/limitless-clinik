@@ -22,3 +22,9 @@ async def test_injection_is_inert_and_logged(make_harness):
     assert harness.events("injection_flag")[0]["payload"]["reasons"]
     assert {e["payload"]["code"] for e in harness.events("gate_refused")} == {"consent_required"}
     assert "one appointment at a time" in result["reply"]
+
+
+async def test_reply_is_never_empty(make_harness):
+    harness = await make_harness()
+    result = await harness.say("hello")
+    assert result["reply"].startswith("I can book, move or cancel")

@@ -72,6 +72,8 @@ async def finish(state: TurnState) -> TurnResult:
     if state.injection and state.injection.bulk and state.writes == 0:
         state.add("refusal", "refusal.bulk")
     await enforce_truth(state, regenerate)
+    if not state.segments and not state.prose.strip():
+        state.add("info", "help.default")
     reply = compose.render(state)
     session = sessions.get_session(state.conn, state.session_id)
     result = TurnResult(

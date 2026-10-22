@@ -42,6 +42,7 @@ TEMPLATES = {
     "verb.reschedule": "आपकी अपॉइंटमेंट वहाँ कर दूँ",
     "label.with_week": "{week} {day} ({date})",
     "label.standalone": "{day} ({date})",
+    "help.default": "मैं क्लिनिक अपॉइंटमेंट बुक, बदल या रद्द कर सकता हूँ — दिन, समय और डॉक्टर बताइए।",
     "joiner": " या ",
     "list_joiner": "; ",
 }

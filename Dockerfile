@@ -11,3 +11,4 @@ RUN uv sync --frozen --no-dev
 COPY shared shared
 COPY clinic clinic
 COPY agent agent
+COPY demo demo

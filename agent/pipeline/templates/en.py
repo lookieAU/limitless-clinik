@@ -42,6 +42,7 @@ TEMPLATES = {
     "verb.reschedule": "move your appointment there",
     "label.with_week": "{day} {week} ({date})",
     "label.standalone": "{day} ({date})",
+    "help.default": "I can book, move or cancel a clinic appointment — tell me the day, time and doctor.",
     "joiner": " or ",
     "list_joiner": "; ",
 }
