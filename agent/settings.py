@@ -25,6 +25,7 @@ class AgentSettings:
     embedder: str = "hash"
     model_cache: str = "/data/models"
     background_tasks: bool = True
+    replay_url: str = "http://localhost:8002/replay"
 
     @classmethod
     def from_env(cls) -> "AgentSettings":
@@ -43,4 +44,5 @@ class AgentSettings:
             clinic_timeout_s=float(os.environ.get("CLINIC_TIMEOUT_S", cls.clinic_timeout_s)),
             embedder=os.environ.get("EMBEDDER", cls.embedder),
             model_cache=os.environ.get("MODEL_CACHE", cls.model_cache),
+            replay_url=os.environ.get("REPLAY_URL", cls.replay_url),
         )

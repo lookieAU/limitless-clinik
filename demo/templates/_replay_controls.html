@@ -1,0 +1,8 @@
+<div id="controls"{% if oob %} hx-swap-oob="outerHTML"{% endif %}>
+  {% if not replay.done %}
+  <button class="primary" hx-post="/replay/next" hx-target="#steps" hx-swap="beforeend" hx-disabled-elt="this">Step {{ replay.position + 1 }} of {{ replay.timeline.steps | length }} →</button>
+  {% else %}
+  <p class="muted">Replay finished.</p>
+  <button hx-post="/replay/start" hx-target="#controls" hx-swap="outerHTML" hx-on::after-request="document.getElementById('steps').innerHTML=''">Restart</button>
+  {% endif %}
+</div>

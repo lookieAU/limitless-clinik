@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+{% block nav %}
+  <span class="muted">{{ user.display_name }} · agent clock {{ now.isoformat(timespec="minutes") }}</span>
+  <a href="/chat">Back to chat</a>
+{% endblock %}
+{% block body %}
+<div class="admin-grid">
+  <section class="panel">
+    <h2>Clinic-side changes</h2>
+    {% for row in verified if row.status == "confirmed" %}
+    <form hx-post="/admin/act/cancel-slot" hx-target="#result">
+      <input type="hidden" name="slot_id" value="{{ row.slot.id }}">
+      <span>{{ row.ref }} · {{ row.when }}</span>
+      <button class="primary">Clinic cancels slot</button>
+      <button class="link" name="deliver" value="false">…and lose the webhook</button>
+    </form>
+    {% else %}<p class="muted">No confirmed bookings for {{ user.display_name }}.</p>{% endfor %}
+    <form hx-post="/admin/act/fill-slot" hx-target="#result">
+      <input name="slot_id" placeholder="slot id, e.g. dr_a_20261106_1100" required>
+      <button>Fill slot</button>
+    </form>
+  </section>
+  <section class="panel">
+    <h2>Fault injection</h2>
+    <form hx-post="/admin/act/fault" hx-target="#result">
+      <select name="endpoint"><option>book</option><option>reschedule</option><option>cancel</option></select>
+      <select name="mode">{% for mode in modes %}<option>{{ mode }}</option>{% endfor %}</select>
+      <button>Set</button>
+    </form>
+    <p class="muted small">Timeouts fire once, then reset.</p>
+  </section>
+  <section class="panel">
+    <h2>Clock</h2>
+    <form hx-post="/admin/act/clock" hx-target="#result"><button name="hours" value="1">+1 hour</button><button name="hours" value="24">+1 day</button></form>
+  </section>
+  <section class="panel">
+    <h2>Nightly memory summary</h2>
+    <form hx-post="/admin/act/summary" hx-target="#result"><button name="lossy" value="no" class="primary">Run now</button><button name="lossy" value="yes">Run with lossy summarizer</button></form>
+  </section>
+  <section class="panel">
+    <h2>Clinics</h2>
+    {% for clinic in clinics %}
+    <form hx-post="/admin/act/clinic" hx-target="#result">
+      <input type="hidden" name="clinic_id" value="{{ clinic }}">
+      <span>{{ clinic }} — {{ "enabled" if clinic in enabled else "disabled" }}</span>
+      <button name="enabled" value="{{ 'no' if clinic in enabled else 'yes' }}">{{ "Disable" if clinic in enabled else "Enable" }}</button>
+    </form>
+    {% endfor %}
+  </section>
+  <section class="panel">
+    <h2>Reset</h2>
+    <form hx-post="/admin/act/reset" hx-target="#result" hx-confirm="Wipe clinic and agent data?"><button>Reset everything</button></form>
+  </section>
+  <section class="panel" style="grid-column: 1 / -1"><h2>Result</h2><div id="result" class="muted">Actions show their result here.</div></section>
+</div>
+{% endblock %}

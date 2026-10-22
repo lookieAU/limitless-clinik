@@ -126,11 +126,13 @@ def apply_claims(active: list[ClaimView], new: list[ClaimView], today: date, det
     outcome = Outcome()
     live = list(active)
     for claim in sorted(new, key=lambda c: c.seq):
+        detecting = detect and outcome.conflict is None
         for old in list(live):
             if old.subject == claim.subject and old.polarity == "negative" and claim.polarity == "positive" and old.value == claim.value:
-                if detect:
+                if detecting:
                     outcome.conflict = contradiction(old, claim)
-                    return outcome
+                    detecting = False
+                continue
             if supersedes(old, claim):
                 live.remove(old)
                 outcome.superseded.append((old.id, claim.id))
@@ -138,9 +140,8 @@ def apply_claims(active: list[ClaimView], new: list[ClaimView], today: date, det
                 live.remove(old)
                 outcome.superseded.append((old.id, claim.id))
         live.append(claim)
-        if detect and (conflict := date_conflict(live, claim, today)):
+        if detecting and (conflict := date_conflict(live, claim, today)):
             outcome.conflict = conflict
-            return outcome
     return outcome
 
 

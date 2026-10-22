@@ -1,0 +1,75 @@
+title: The appointment that changed four times
+user: u_asha
+steps:
+  - narrate: "Asha books a specific slot. The agent checks availability, books it, and reports the clinic's own reference."
+    say: "Book me Thursday 3pm with Dr A."
+    extract:
+      intent: book
+      claims:
+        - {subject: day, value: thu, raw_span: Thursday}
+        - {subject: time_window, value: "15:00", raw_span: 3pm}
+        - {subject: doctor, value: dr_a, raw_span: Dr A}
+    steps:
+      - tool_calls: [{name: check_availability, args: {doctor_id: dr_a, date_from: "2026-11-05", time_from: "15:00", time_to: "15:30"}}]
+      - tool_calls: [{name: book, args: {slot_id: dr_a_20261105_1500}}]
+      - text: "Anything else I can help with?"
+
+  - narrate: "She changes her mind to a window. 11:00 is full, so the agent offers 9:00 and waits. Even when the LLM tries to book straight away, the gate refuses: no consent yet."
+    say: "Actually make it Friday before noon."
+    extract:
+      intent: reschedule
+      claims:
+        - {subject: day, value: fri, raw_span: Friday}
+        - {subject: time_window, value: "before_12:00", raw_span: before noon}
+    steps:
+      - tool_calls: [{name: check_availability, args: {doctor_id: dr_a, date_from: "2026-11-06", time_from: "09:00", time_to: "12:00"}}]
+      - tool_calls: [{name: reschedule, args: {slot_id: dr_a_20261106_0900}}]
+      - tool_calls: [{name: propose_slot, args: {slot_id: dr_a_20261106_0900, action: reschedule}}]
+      - text: "11:00 is taken, so here's the closest option."
+
+  - narrate: "She says yes. Only now does the reschedule run, with an idempotency key tied to the accepted offer."
+    say: "Yes"
+    extract: {intent: accept_offer}
+    steps:
+      - tool_calls: [{name: reschedule, args: {slot_id: dr_a_20261106_0900}}]
+      - text: "All set on my side."
+
+  - narrate: "In Hinglish she says 'next week' and then 'Thursday at 3'. Thursday this week or next? The agent asks one question and locks writes."
+    say: "अगले हफ्ते कर दो… Thursday 3 baje chalega."
+    extract:
+      intent: reschedule
+      claims:
+        - {subject: week, value: next_week, raw_span: अगले हफ्ते}
+        - {subject: day, value: thu, raw_span: Thursday}
+        - {subject: time_window, value: "15:00", raw_span: 3 baje}
+    steps:
+      - tool_calls: [{name: reschedule, args: {slot_id: dr_a_20261112_1500}}]
+
+  - narrate: "She answers: next week's, not this week. The losing reading is superseded, 'NOT this week' becomes a live constraint, and the move goes through."
+    say: "Agle hafte wala, is hafte nahi."
+    extract:
+      intent: clarification_answer
+      claims:
+        - {subject: week, value: next_week, raw_span: Agle hafte}
+        - {subject: week, value: this_week, polarity: negative, raw_span: is hafte nahi}
+    steps:
+      - tool_calls: [{name: check_availability, args: {doctor_id: dr_a, date_from: "2026-11-12", time_from: "15:00", time_to: "15:30"}}]
+      - tool_calls: [{name: reschedule, args: {slot_id: dr_a_20261112_1500}}]
+      - text: "हो गया।"
+
+  - narrate: "The clinic cancels that slot on its side. A signed webhook arrives: verified state flips to cancelled and the positive claims tied to the booking are overridden. The .ics feed now shows CANCELLED."
+    admin: {cancel_slot: dr_a_20261112_1500}
+
+  - narrate: "A day later, in a new session, she asks if it's confirmed. The cancellation comes first, as a fact with its source and time. The agent re-checks with the clinic and offers rebooking from live slots that respect 'NOT this week'."
+    clock: {days: 1}
+    new_session: true
+    say: "Hi — did you confirm my booking?"
+    extract: {intent: status_query}
+    steps:
+      - text: "Sorry about that — pick a slot and I'll book it."
+
+  - narrate: "The nightly summary runs for the first day. Negations are structured columns; the prose is checked against them in both languages."
+    summary: {day: "2026-11-02"}
+
+  - narrate: "The same run with a summarizer that drops the negation ('Prefers this week'). The validator rejects it, logs summary_rejected and keeps the previous validated memory."
+    summary: {day: "2026-11-02", lossy: true}

@@ -49,3 +49,10 @@ def test_answer_picks_next_week_option():
 def test_detect_false_never_raises_conflict():
     outcome = apply_claims([c(1, "week", "next_week")], [c(2, "day", "thu")], TODAY, detect=False)
     assert outcome.conflict is None
+
+
+def test_claims_after_a_conflict_still_supersede():
+    active = [c(1, "time_window", "before_12:00")]
+    outcome = apply_claims(active, [c(2, "week", "next_week"), c(3, "day", "thu"), c(4, "time_window", "15:00")], TODAY)
+    assert outcome.conflict.kind == "ambiguous"
+    assert ("c1", "c4") in outcome.superseded

@@ -2,12 +2,17 @@ import asyncio
 import logging
 from contextlib import asynccontextmanager
 
+from pathlib import Path
+
 from fastapi import FastAPI
+from fastapi.staticfiles import StaticFiles
 
 from agent import api, calendar_feed, webhooks_in
 from agent.context import AgentContext, build_context
 from agent.memory.scheduler import scheduler_loop
 from agent.pipeline.sync import poll_all
+from agent.ui import admin as ui_admin
+from agent.ui import routes as ui_routes
 
 log = logging.getLogger("agent")
 
@@ -48,6 +53,10 @@ def create_app(ctx: AgentContext | None = None) -> FastAPI:
     app.include_router(api.router)
     app.include_router(webhooks_in.router)
     app.include_router(calendar_feed.router)
+    app.include_router(ui_routes.router)
+    app.include_router(ui_admin.router)
+    app.mount("/static", StaticFiles(directory=Path(__file__).parent / "ui" / "static"), name="static")
+    ui_routes.templates.env.globals["replay_url"] = app.state.ctx.settings.replay_url
 
     @app.get("/health")
     async def health() -> dict:

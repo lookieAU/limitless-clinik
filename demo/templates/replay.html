@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% block title %}Replay · Clinik by Limitless{% endblock %}
+{% block nav %}<span class="muted">{{ timeline.title }} · scripted LLM · fixed clock · isolated databases</span>{% endblock %}
+{% block body %}
+<div class="layout">
+  <section>
+    <div id="steps"></div>
+    <div id="controls">
+      <button class="primary" hx-post="/replay/start" hx-target="#controls" hx-swap="outerHTML" hx-on::after-request="document.getElementById('steps').innerHTML=''">Start replay</button>
+    </div>
+  </section>
+  <aside id="panels"><p class="muted">Panels show what the agent knows after each step.</p></aside>
+</div>
+{% endblock %}

@@ -1,12 +1,3 @@
-from agent.llm.types import AssistantStep, Extraction
+from agent.memory.lossy import LossySummarizer
 
-
-class LossySummarizer:
-    async def extract(self, request) -> Extraction:
-        return Extraction()
-
-    async def step(self, request) -> AssistantStep:
-        return AssistantStep()
-
-    async def summarize(self, request) -> str:
-        return "Prefers Thursday."
+__all__ = ["LossySummarizer"]

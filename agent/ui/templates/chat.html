@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% block nav %}
+  <span class="muted">{{ user.display_name }} · {{ user.tz }}</span>
+  <a href="/calendar/{{ user.ics_token }}.ics" title="Subscribe in your calendar app">Subscribe (.ics)</a>
+  <a href="/admin">Admin</a>
+  <a href="{{ replay_url }}" target="_blank">Replay</a>
+  <form method="post" action="/session/new" class="inline"><button class="link">New session</button></form>
+{% endblock %}
+{% block body %}
+<div class="layout" hx-ext="sse" sse-connect="/ui/stream">
+  <section class="conversation">
+    <div id="messages" class="messages">
+      {% if not pairs %}
+      <div class="bubble agent"><p>Hi! I can book, move or cancel your clinic appointment — in English or Hindi.</p></div>
+      {% endif %}
+      {% for pair in pairs %}{% include "_message.html" %}{% endfor %}
+    </div>
+    <form class="composer" hx-post="/ui/send" hx-target="#messages" hx-swap="beforeend"
+          hx-on::before-request="this.querySelector('[name=client_msg_id]').value = crypto.randomUUID()"
+          hx-on::after-request="if (event.detail.successful) { this.reset(); document.getElementById('messages').lastElementChild?.scrollIntoView({behavior: 'smooth'}) }">
+      <input type="hidden" name="client_msg_id">
+      <input name="text" placeholder="e.g. Book me Thursday 3pm with Dr A" autocomplete="off" required autofocus>
+      <button class="primary">Send</button>
+      <span class="htmx-indicator muted">checking with the clinic…</span>
+    </form>
+  </section>
+  <aside id="panels" hx-get="/ui/panels" hx-trigger="panels from:body, sse:panels" hx-swap="innerHTML">
+    {% include "_panels.html" %}
+  </aside>
+</div>
+{% endblock %}

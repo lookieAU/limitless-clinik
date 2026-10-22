@@ -54,7 +54,7 @@ def value_label(subject: str, value: str, lang: str, doctors: dict[str, str] | N
     if subject == "time_window":
         return time_label(value, lang)
     if subject == "doctor":
-        return (doctors or {}).get(value, value)
+        return (doctors or {}).get(value) or f"Dr {value.removeprefix('dr_').upper()}"
     return value
 
 

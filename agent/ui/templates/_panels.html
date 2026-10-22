@@ -1,0 +1,50 @@
+<section class="panel">
+  <h2>Verified <span class="muted small">from the clinic · fresh ≤ {{ ttl }}s</span></h2>
+  {% if not verified %}<p class="muted">Nothing verified yet.</p>{% endif %}
+  {% for row in verified %}
+  <div class="row">
+    <span class="badge status-{{ row.status }}">{{ row.status }}</span>
+    <div>
+      <strong>{{ row.ref }}</strong> · {{ row.slot.doctor_name }}<br>
+      <span>{{ row.when }}</span><br>
+      <span class="muted small">via {{ row.source }} · observed {{ row.observed_ago }} · v{{ row.version }} · {{ row.clinic_id }}</span>
+    </div>
+  </div>
+  {% endfor %}
+</section>
+<section class="panel">
+  <h2>Claimed <span class="muted small">what the customer said</span></h2>
+  {% if not claims %}<p class="muted">No claims yet.</p>{% endif %}
+  {% for claim in claims %}
+  <div class="row claim-{{ claim.status }}">
+    <span class="badge {{ claim.polarity }}">{{ "NOT" if claim.polarity == "negative" else "YES" }}</span>
+    <div>
+      <strong>{{ claim.label }}</strong> <span class="muted">“{{ claim.raw_text }}”</span><br>
+      <span class="muted small">{{ claim.status }}{% if claim.overridden_by_event %} by clinic event{% endif %} · {{ claim.lang }} · {{ claim.said_ago }}</span>
+    </div>
+  </div>
+  {% endfor %}
+</section>
+<section class="panel">
+  <h2>Memory <span class="muted small">nightly summaries (claims only)</span></h2>
+  {% if not summaries["items"] %}<p class="muted">No summaries yet.</p>{% endif %}
+  {% for item in summaries["items"] %}
+  <div class="row">
+    <span class="badge {{ 'verified' if item.validated else 'rejected' }}">{{ "kept" if item.validated else "rejected" }}</span>
+    <div>
+      <span>{{ item.prose }}</span><br>
+      <span class="muted small">{{ item.day_local }}{% if item.id == summaries.active %} · in use{% endif %}{% if not item.validated %} · {{ item.errors_json }}{% endif %}</span>
+    </div>
+  </div>
+  {% endfor %}
+</section>
+<section class="panel">
+  <h2>Event log</h2>
+  <ul class="events">
+    {% for event in events %}
+    <li class="event-{{ event.type }}"><code>{{ event.type }}</code> <span class="muted small">{{ event.created_utc[11:19] }}</span>
+      {% if event.type in ("gate_refused", "injection_flag", "reply_blocked", "authz_denied", "summary_rejected", "clarification_asked", "webhook_received", "clinic_change") %}<span class="small">{{ event.payload | tojson }}</span>{% endif %}
+    </li>
+    {% endfor %}
+  </ul>
+</section>
