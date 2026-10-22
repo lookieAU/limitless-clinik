@@ -10,6 +10,7 @@ from clinic.repo import ClinicError
 
 def create_app(ctx: ClinicContext | None = None) -> FastAPI:
     logging.basicConfig(level=logging.INFO)
+    logging.getLogger("httpx").setLevel(logging.WARNING)
     app = FastAPI(title="Clinik clinic mock")
     app.state.ctx = ctx or build_context()
     app.include_router(api.router)

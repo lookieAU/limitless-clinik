@@ -47,3 +47,19 @@ async def clinic_http(clinic_ctx):
         transport=transport, base_url="http://clinic", headers={"X-Api-Key": API_KEY}
     ) as client:
         yield client
+
+
+@pytest.fixture
+async def make_harness(tmp_path):
+    from demo.harness import build_harness
+
+    built = []
+
+    async def factory(script: dict | None = None, **kwargs):
+        harness = await build_harness(tmp_path, script, **kwargs)
+        built.append(harness)
+        return harness
+
+    yield factory
+    for harness in built:
+        await harness.close()

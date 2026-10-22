@@ -1,0 +1,9 @@
+{
+  "id": "clinic_b",
+  "name": "Marina Health Centre",
+  "tz": "Asia/Dubai",
+  "cancellation": {"delivery": "polling", "status_values": ["voided", "cancelled_by_clinic"]},
+  "customer_cancel_cutoff_hours": 24,
+  "reschedule_mode": "cancel_and_rebook",
+  "max_active_bookings_per_customer": 1
+}

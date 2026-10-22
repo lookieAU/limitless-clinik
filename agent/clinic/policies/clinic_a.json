@@ -1,0 +1,9 @@
+{
+  "id": "clinic_a",
+  "name": "Indiranagar Family Clinic",
+  "tz": "Asia/Kolkata",
+  "cancellation": {"delivery": "webhook", "status_values": ["cancelled"]},
+  "customer_cancel_cutoff_hours": 0,
+  "reschedule_mode": "in_place",
+  "max_active_bookings_per_customer": 3
+}

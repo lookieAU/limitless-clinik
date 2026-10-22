@@ -1,0 +1,47 @@
+TEMPLATES = {
+    "status.confirmed": "{doctor}, {when} — confirmed by the clinic, ref {ref} (checked {ago}).",
+    "status.cancelled": "{doctor}, {when} — cancelled at the clinic, ref {ref} (checked {ago}).",
+    "action.booked": "Done — {doctor}, {when} is confirmed by the clinic, ref {ref} (checked {ago}).",
+    "action.rescheduled": "Moved — {doctor}, {when} is confirmed by the clinic, ref {ref} (checked {ago}).",
+    "action.cancelled": "Cancelled at the clinic: {doctor}, {when}, ref {ref} (checked {ago}).",
+    "notice.booking_cancelled": (
+        "First, an update from the clinic: your appointment with {doctor} on {when} (ref {ref}) was cancelled "
+        "by the clinic. They told us via {source} at {at}."
+    ),
+    "notice.booking_rescheduled": (
+        "First, an update from the clinic: they moved your appointment (ref {ref}) to {doctor}, {when}. "
+        "They told us via {source} at {at}."
+    ),
+    "offer.single": "{doctor} has {when} free (checked {ago}). Shall I {verb}? Nothing changes until you say yes.",
+    "offer.list": "Free slots right now (checked {ago}): {options}. Want one of these? Nothing changes until you pick.",
+    "offer.rebook": "I can rebook you. Free slots right now (checked {ago}): {options}. Want one of these? Nothing changes until you pick.",
+    "offer.option": "{n}) {doctor}, {when}",
+    "question.dates": "Just to be sure — do you mean {a} or {b}?",
+    "question.contradiction": "Earlier you said {older}, and now {newer} — which should I go with?",
+    "question.target": "You have {count} upcoming appointments: {options}. Which one do you mean?",
+    "uncertain.write": "I'm not sure that went through — the clinic didn't answer in time, so I checked with them before trying again.",
+    "uncertain.found": "The clinic did record it, so I didn't send it again.",
+    "uncertain.retried": "They had no record of it, so I retried the same request (it can't double-book).",
+    "uncertain.unknown": "The clinic still isn't answering, so I can't tell yet whether it went through. I'll check again before doing anything else.",
+    "refusal.authz_denied": "I couldn't find that booking on your account.",
+    "refusal.cancel_cutoff": "{clinic} needs at least {hours} hours' notice to cancel or move online, so I can't change this one here — please call the clinic.",
+    "refusal.active_limit": "{clinic} allows at most {limit} upcoming appointment(s) per person, so I can't add another.",
+    "refusal.bulk": "I can only help with one appointment at a time, so I haven't made any changes.",
+    "refusal.slot_unavailable": "That slot is no longer free at the clinic, so nothing was changed.",
+    "refusal.clinic_error": "The clinic turned that request down ({code}), so nothing was changed.",
+    "fallback.checking": "I'm checking with the clinic before saying anything about your booking status.",
+    "fallback.unreachable": "I couldn't reach the clinic just now, so I can't confirm the current status of your booking.",
+    "none.bookings": "I don't see any appointments on your account at the clinic (checked {ago}).",
+    "ago.now": "just now",
+    "ago.seconds": "{n}s ago",
+    "ago.minutes": "{n} min ago",
+    "source.webhook": "a webhook",
+    "source.poll": "their status feed",
+    "source.api": "the clinic API",
+    "verb.book": "book it for you",
+    "verb.reschedule": "move your appointment there",
+    "label.with_week": "{day} {week} ({date})",
+    "label.standalone": "{day} ({date})",
+    "joiner": " or ",
+    "list_joiner": "; ",
+}
