@@ -55,6 +55,23 @@ services:
     command: ["uvicorn", "--factory", "demo.web:create_app", "--host", "0.0.0.0", "--port", "8002"]
     ports: ["8002:8002"]
 
+  voice:
+    profiles: ["voice"]
+    build:
+      context: .
+      args:
+        EXTRAS: voice
+    image: clinik-voice:local
+    command: ["python", "-m", "agent.voice.livekit_worker", "start"]
+    env_file:
+      - path: .env
+        required: false
+    environment:
+      AGENT_URL: http://agent:8000
+    depends_on:
+      agent:
+        condition: service_healthy
+
 volumes:
   clinic-data:
   agent-data:

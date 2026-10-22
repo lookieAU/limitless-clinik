@@ -1,5 +1,7 @@
 from pydantic import BaseModel
 
+from agent.llm.types import Intent
+
 from agent.pipeline import compose
 from agent.pipeline.clarify import ask_conflict, resolve_pending
 from agent.pipeline.conflicts import apply_claims, view
@@ -52,9 +54,11 @@ async def begin(ctx, user: dict, session: dict, text: str, client_msg_id: str | 
     return state
 
 
-async def understand(state: TurnState) -> bool:
+async def understand(state: TurnState, recap: bool) -> bool:
     await deliver_notices(state)
     await extract(state)
+    if recap and state.extraction.intent == Intent.CHAT:
+        state.extraction = state.extraction.model_copy(update={"intent": Intent.STATUS})
     pending = resolve_pending(state)
     if pending is False:
         return False
@@ -92,11 +96,11 @@ async def finish(state: TurnState) -> TurnResult:
     return result
 
 
-async def turn(ctx, user: dict, session: dict, text: str, client_msg_id: str | None = None) -> TurnResult:
+async def turn(ctx, user: dict, session: dict, text: str, client_msg_id: str | None = None, recap: bool = False) -> TurnResult:
     prior = messages.prior_result(ctx.conn, session["id"], client_msg_id)
     if prior:
         return TurnResult(**prior)
     state = await begin(ctx, user, session, text, client_msg_id)
-    if await understand(state):
+    if await understand(state, recap):
         await plan(state)
     return await finish(state)

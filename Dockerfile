@@ -5,9 +5,10 @@ ENV UV_COMPILE_BYTECODE=1 \
     UV_PROJECT_ENVIRONMENT=/opt/venv \
     PATH="/opt/venv/bin:$PATH" \
     PYTHONUNBUFFERED=1
+ARG EXTRAS=""
 WORKDIR /app
 COPY pyproject.toml uv.lock .python-version ./
-RUN uv sync --frozen --no-dev
+RUN uv sync --frozen --no-dev ${EXTRAS:+--extra $EXTRAS}
 COPY shared shared
 COPY clinic clinic
 COPY agent agent

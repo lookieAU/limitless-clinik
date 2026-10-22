@@ -19,6 +19,11 @@ dependencies = [
     "uvicorn[standard]==0.54.0",
 ]
 
+[project.optional-dependencies]
+voice = [
+    "livekit-agents==1.8.8",
+]
+
 [tool.uv]
 package = false
 

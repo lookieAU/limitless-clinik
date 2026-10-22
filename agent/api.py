@@ -21,6 +21,7 @@ class LoginRequest(BaseModel):
 class ChatRequest(BaseModel):
     text: str
     client_msg_id: str | None = None
+    recap: bool = False
 
 
 @router.post("/login/code")
@@ -49,7 +50,7 @@ async def new_session(request: Request, response: Response, auth: Auth = Depends
 
 @router.post("/chat")
 async def chat(body: ChatRequest, request: Request, auth: Auth = Depends(require_auth)) -> TurnResult:
-    return await turn(request.app.state.ctx, auth.user, auth.session, body.text, body.client_msg_id)
+    return await turn(request.app.state.ctx, auth.user, auth.session, body.text, body.client_msg_id, recap=body.recap)
 
 
 @router.get("/state")
