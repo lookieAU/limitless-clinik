@@ -3,6 +3,8 @@ from datetime import date, time, timedelta
 from agent.clinic.observe import observe
 from agent.memory.recall import recall
 from agent.pipeline.compose import ago, when
+from agent.pipeline.conflicts import exact_time
+from agent.pipeline.consent import live_views
 from agent.pipeline.policy_gate import CLINIC_ERRORS, Refusal, authorize, check_constraints
 from agent.pipeline.state import TurnState
 from agent.pipeline.templates import text
@@ -54,15 +56,36 @@ async def check_availability(state: TurnState, args: dict) -> dict:
     end = local_to_utc(last + timedelta(days=1), time(0, 0), adapter.tz)
     earliest = time.fromisoformat(args.get("time_from") or "00:00")
     latest = time.fromisoformat(args.get("time_to") or "23:59")
+    exact = latest <= earliest
     slots = await adapter.list_slots(start, end, args.get("doctor_id"))
     observed_at = state.ctx.clock.now()
     matches = []
     for slot in slots:
         local = to_local(slot.start_utc, adapter.tz).time()
-        if earliest <= local < latest:
+        if (local == earliest) if exact else (earliest <= local < latest):
             state.slot_obs[slot.id] = (slot, observed_at)
-            matches.append(slot_summary(state, slot))
-    return {"ok": True, "clinic_id": adapter.id, "slots": matches[:MAX_SLOTS], "total": len(matches), "checked_at": to_iso_z(observed_at)}
+            matches.append(slot)
+    anchor = requested_time(state, args)
+    if anchor is not None:
+        matches.sort(key=lambda slot: (abs(minutes(to_local(slot.start_utc, adapter.tz).time()) - minutes(anchor)), slot.start_utc))
+    shown = sorted(matches[:MAX_SLOTS], key=lambda slot: slot.start_utc)
+    return {
+        "ok": True,
+        "clinic_id": adapter.id,
+        "slots": [slot_summary(state, slot) for slot in shown],
+        "total": len(matches),
+        "checked_at": to_iso_z(observed_at),
+    }
+
+
+def minutes(wall: time) -> int:
+    return wall.hour * 60 + wall.minute
+
+
+def requested_time(state: TurnState, args: dict) -> time | None:
+    if args.get("time_from") and args.get("time_from") == args.get("time_to"):
+        return time.fromisoformat(args["time_from"])
+    return exact_time(live_views(state))
 
 
 async def propose_slot(state: TurnState, args: dict) -> dict:

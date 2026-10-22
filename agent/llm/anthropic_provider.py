@@ -65,8 +65,7 @@ class AnthropicProvider:
             max_tokens=MAX_TOKENS,
             system=request.system,
             messages=to_api_messages(request.messages),
-            tools=request.tools,
-            tool_choice={"type": "auto"} if request.allow_tools else {"type": "none"},
+            **({"tools": request.tools, "tool_choice": {"type": "auto"} if request.allow_tools else {"type": "none"}} if request.tools else {}),
             output_config={"effort": self.effort},
             **self.fallback_options(),
         )

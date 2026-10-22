@@ -2,18 +2,23 @@ import os
 
 import pytest
 
-from agent.llm.anthropic_provider import AnthropicProvider
+from agent.context import build_llm
+from agent.llm.scripted import ScriptedProvider
 from agent.settings import AgentSettings
 
 pytestmark = [
     pytest.mark.live,
-    pytest.mark.skipif(not os.environ.get("ANTHROPIC_API_KEY"), reason="needs ANTHROPIC_API_KEY"),
+    pytest.mark.skipif(
+        not (os.environ.get("ANTHROPIC_API_KEY") or os.environ.get("OPENROUTER_API_KEY")),
+        reason="needs ANTHROPIC_API_KEY or OPENROUTER_API_KEY",
+    ),
 ]
 
 
 @pytest.fixture
 async def live(make_harness):
-    provider = AnthropicProvider(os.environ["ANTHROPIC_API_KEY"], os.environ.get("ANTHROPIC_MODEL", AgentSettings.anthropic_model))
+    provider = build_llm(AgentSettings.from_env())
+    assert not isinstance(provider, ScriptedProvider), "set LLM_PROVIDER to anthropic or openrouter"
     return await make_harness(llm=provider, clinic_timeout_s=5.0)
 
 
@@ -30,7 +35,8 @@ async def test_live_window_with_full_slot_never_books_silently(live):
     result = await live.say("Actually make it Friday before noon.")
     assert live.clinic_writes() == writes
     assert live.clinic_bookings()[0]["slot_id"] == "dr_a_20261105_1500"
-    assert "9:00 am" in result["reply"]
+    assert "Fri 6 Nov" in result["reply"] and "Nothing changes until you say yes" in result["reply"]
+    assert "11:00 am" not in result["reply"].split("\n\n")[0]
 
 
 async def test_live_contradiction_asks_and_does_not_write(live):

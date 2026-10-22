@@ -11,6 +11,7 @@ STT_MODEL = os.environ.get("VOICE_STT_MODEL", "deepgram/nova-3")
 TTS_MODEL = os.environ.get("VOICE_TTS_MODEL", "cartesia/sonic-3")
 TTS_VOICE = os.environ.get("VOICE_TTS_VOICE", "")
 TTS_LANGUAGE = os.environ.get("VOICE_TTS_LANGUAGE", "hi")
+DEFAULT_USER = os.environ.get("VOICE_DEFAULT_USER", "u_asha")
 
 
 class ClinikVoice(Agent):
@@ -37,7 +38,7 @@ async def clinik_call(ctx: agents.JobContext) -> None:
     participant = await ctx.wait_for_participant()
     client = httpx.AsyncClient(base_url=AGENT_URL, timeout=30.0)
     bridge = VoiceBridge(client, participant.identity)
-    await bridge.login()
+    await bridge.login(fallback_user=DEFAULT_USER)
     tts = inference.TTS(model=TTS_MODEL, language=TTS_LANGUAGE, **({"voice": TTS_VOICE} if TTS_VOICE else {}))
     session = AgentSession(stt=inference.STT(model=STT_MODEL, language="multi"), tts=tts)
     await session.start(room=ctx.room, agent=ClinikVoice(bridge))

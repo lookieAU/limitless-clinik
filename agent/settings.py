@@ -18,6 +18,8 @@ class AgentSettings:
     anthropic_api_key: str = ""
     anthropic_model: str = "claude-haiku-5-5"
     anthropic_effort: str = "medium"
+    openrouter_api_key: str = ""
+    openrouter_model: str = "anthropic/claude-haiku-5.5"
     freshness_ttl_s: float = 120.0
     clinic_timeout_s: float = 3.0
     sync_gap_s: float = 600.0
@@ -44,6 +46,8 @@ class AgentSettings:
             anthropic_api_key=os.environ.get("ANTHROPIC_API_KEY", ""),
             anthropic_model=os.environ.get("ANTHROPIC_MODEL", cls.anthropic_model),
             anthropic_effort=os.environ.get("ANTHROPIC_EFFORT", cls.anthropic_effort),
+            openrouter_api_key=os.environ.get("OPENROUTER_API_KEY", ""),
+            openrouter_model=os.environ.get("OPENROUTER_MODEL", cls.openrouter_model),
             freshness_ttl_s=float(os.environ.get("FRESHNESS_TTL_S", cls.freshness_ttl_s)),
             clinic_timeout_s=float(os.environ.get("CLINIC_TIMEOUT_S", cls.clinic_timeout_s)),
             embedder=os.environ.get("EMBEDDER", cls.embedder),

@@ -4,8 +4,8 @@ from agent.pipeline.state import TurnState
 from agent.repo import verified
 
 STATUS_PATTERNS = (
-    re.compile(r"\b(confirmed|booked|scheduled|all set|cancell?ed|reserved|locked in)\b", re.IGNORECASE),
-    re.compile(r"(कन्फर्म|बुक|पक्का|रद्द)"),
+    re.compile(r"\b(confirmed|booked|scheduled|all set|set for|is set|cancell?ed|reserved|locked in)\b", re.IGNORECASE),
+    re.compile(r"(कन्फर्म|बुक|पक्का|रद्द|रख दिया)"),
     re.compile(r"\b(confirm|book|cancel)\s*(ho|kar)\s*(gaya|gayi|gya|diya|di|dia)\b", re.IGNORECASE),
 )
 

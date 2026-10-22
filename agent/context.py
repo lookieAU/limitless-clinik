@@ -43,6 +43,12 @@ class AgentContext:
 
 
 def build_llm(settings: AgentSettings) -> LLMProvider:
+    if settings.llm_provider == "openrouter":
+        if settings.openrouter_api_key:
+            from agent.llm.openrouter_provider import OpenRouterProvider
+
+            return OpenRouterProvider(settings.openrouter_api_key, settings.openrouter_model, settings.anthropic_effort)
+        log.warning("LLM_PROVIDER=openrouter but OPENROUTER_API_KEY is empty; using the scripted provider")
     if settings.llm_provider == "anthropic":
         if settings.anthropic_api_key:
             from agent.llm.anthropic_provider import AnthropicProvider

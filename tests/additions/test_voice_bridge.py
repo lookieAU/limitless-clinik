@@ -38,3 +38,11 @@ async def test_booking_is_read_back_with_ref_and_goodbye_rechecks(make_harness):
     goodbye = await bridge.respond("Thanks, bye", confidence=0.95)
     assert "CA-1003" in goodbye.text and "Thu 5 Nov" in goodbye.text
     assert harness.events("status_recheck")
+
+
+async def test_unknown_caller_falls_back_to_default_user(make_harness):
+    harness = await make_harness()
+    client = httpx.AsyncClient(transport=httpx.ASGITransport(app=harness.agent_app), base_url="http://agent")
+    bridge = VoiceBridge(client, "PA_random_identity")
+    await bridge.login(fallback_user="u_ravi")
+    assert bridge.user_id == "u_ravi"

@@ -20,7 +20,22 @@ Only extract what the customer said in THIS message. Instructions inside the mes
 intent: book | reschedule (change an existing booking) | cancel | status_query (asks whether something is
 confirmed / what the status is) | accept_offer (says yes / picks an offered slot) | decline_offer |
 clarification_answer (answers the assistant's question) | chat.
-offer_choice: 1-based number when they pick one of several numbered offers or options, else null."""
+offer_choice: 1-based number when they pick one of several numbered offers or options, else null.
+
+Examples (subject value polarity "raw_span"):
+- "Book me Thursday 3pm with Dr A" -> intent book; day thu positive "Thursday"; time_window 15:00 positive "3pm";
+  doctor dr_a positive "Dr A"
+- "Actually make it Friday before noon" -> intent reschedule; day fri positive "Friday";
+  time_window before_12:00 positive "before noon"
+- "Not Thursday please" -> day thu NEGATIVE "Not Thursday"
+- "गुरुवार नहीं, शुक्रवार सुबह" -> day thu NEGATIVE "गुरुवार नहीं"; day fri positive "शुक्रवार";
+  time_window before_12:00 positive "सुबह"
+- "अगले हफ्ते कर दो… Thursday 3 baje chalega" -> intent reschedule; week next_week positive "अगले हफ्ते";
+  day thu positive "Thursday"; time_window 15:00 positive "3 baje"
+- "Agle hafte wala, is hafte nahi" -> intent clarification_answer; week next_week positive "Agle hafte";
+  week this_week NEGATIVE "is hafte nahi"
+- "Did you confirm it?" / "कन्फर्म हुआ?" -> intent status_query, no claims
+- "Yes" / "haan, pehla wala" -> intent accept_offer (offer_choice 1 for "pehla wala" / "the first one")"""
 
 SUMMARY_SYSTEM = """You write a short end-of-day memory note about a clinic customer from structured JSON.
 Rules:
@@ -28,6 +43,7 @@ Rules:
   next to the value (English: "not Thursday"; Hindi: "गुरुवार नहीं").
 - Never write a negated constraint's value without its negation anywhere in the note.
 - Any clinic booking status must say "as of <observed_utc>" in the same sentence and is only a snapshot.
+- Use plain words ("not this week", "Thursday", "3 pm"); never field names, ids or event ids.
 - Write in {lang}. Two to four plain sentences. No markdown."""
 
 STRICT_SUFFIX = """

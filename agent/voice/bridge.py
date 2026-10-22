@@ -42,9 +42,13 @@ class VoiceBridge:
         self.user_id = user_id
         self.pending: str | None = None
 
-    async def login(self) -> None:
-        code = (await self.client.post("/api/login/code", json={"user_id": self.user_id})).json()["code"]
-        (await self.client.post("/api/login", json={"user_id": self.user_id, "code": code})).raise_for_status()
+    async def login(self, fallback_user: str | None = None) -> None:
+        response = await self.client.post("/api/login/code", json={"user_id": self.user_id})
+        if response.status_code == 404 and fallback_user:
+            self.user_id = fallback_user
+            response = await self.client.post("/api/login/code", json={"user_id": self.user_id})
+        response.raise_for_status()
+        (await self.client.post("/api/login", json={"user_id": self.user_id, "code": response.json()["code"]})).raise_for_status()
 
     async def send(self, text: str, recap: bool = False) -> VoiceReply:
         lang = detect_language(text)

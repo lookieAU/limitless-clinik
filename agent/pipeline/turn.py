@@ -24,6 +24,8 @@ class TurnResult(BaseModel):
     segments: list[dict]
     session_state: str
     message_id: str
+    prose: str = ""
+    system_text: str = ""
 
 
 def apply_new_claims(state: TurnState) -> bool:
@@ -87,6 +89,8 @@ async def finish(state: TurnState) -> TurnResult:
         segments=[{"kind": s.kind, "key": s.key, "booking_id": s.booking_id} for s in state.segments],
         session_state=session["state"],
         message_id=state.message_id,
+        prose=state.prose.strip(),
+        system_text=compose.system_text(state),
     )
     messages.add_message(state.conn, state.session_id, "agent", reply, state.lang, state.ctx.clock.now())
     messages.store_result(state.conn, state.message_id, result.model_dump())

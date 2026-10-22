@@ -14,7 +14,7 @@ steps:
       - tool_calls: [{name: book, args: {slot_id: dr_a_20261105_1500}}]
       - text: "Anything else I can help with?"
 
-  - narrate: "She changes her mind to a window. 11:00 is full, so the agent offers 9:00 and waits. Even when the LLM tries to book straight away, the gate refuses: no consent yet."
+  - narrate: "She changes her mind to a window. 11:00 is full, so the agent offers another slot before noon and waits. Even when the LLM tries to book straight away, the gate refuses: no consent yet."
     say: "Actually make it Friday before noon."
     extract:
       intent: reschedule

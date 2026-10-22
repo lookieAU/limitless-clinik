@@ -1,6 +1,5 @@
 import argparse
 import asyncio
-import os
 import tempfile
 from dataclasses import dataclass, field
 from datetime import date
@@ -42,9 +41,9 @@ def scripted(timeline: dict) -> ScriptedProvider:
 
 
 def live_provider():
-    from agent.llm.anthropic_provider import AnthropicProvider
+    from agent.context import build_llm
 
-    return AnthropicProvider(os.environ["ANTHROPIC_API_KEY"], os.environ.get("ANTHROPIC_MODEL", AgentSettings.anthropic_model))
+    return build_llm(AgentSettings.from_env())
 
 
 class Replay:
@@ -93,7 +92,7 @@ class Replay:
 async def build_replay(directory: Path, live: bool = False, timeline: dict | None = None) -> Replay:
     timeline = timeline or load_timeline()
     llm = live_provider() if live else scripted(timeline)
-    harness = await build_harness(directory, llm=llm)
+    harness = await build_harness(directory, llm=llm, clinic_timeout_s=3.0)
     await harness.login(timeline["user"])
     return Replay(harness, timeline)
 

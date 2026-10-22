@@ -66,6 +66,11 @@ def render(state: TurnState) -> str:
     return "\n\n".join(render_segment(state, segment) for segment in ordered)
 
 
+def system_text(state: TurnState) -> str:
+    ordered = sorted(state.segments, key=lambda s: ORDER.index(s.kind))
+    return "\n".join(render_segment(state, segment) for segment in ordered)
+
+
 def verified_fact(state: TurnState, row: dict) -> dict:
     local = format_dual(parse_utc(row["slot"]["start_utc"]), state.ctx.registry.get(row["clinic_id"]).tz, ZoneInfo(state.user["tz"]))
     return {
