@@ -4,7 +4,7 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 
-from agent import api, webhooks_in
+from agent import api, calendar_feed, webhooks_in
 from agent.context import AgentContext, build_context
 from agent.memory.scheduler import scheduler_loop
 from agent.pipeline.sync import poll_all
@@ -47,6 +47,7 @@ def create_app(ctx: AgentContext | None = None) -> FastAPI:
     app.state.ctx = ctx or build_context()
     app.include_router(api.router)
     app.include_router(webhooks_in.router)
+    app.include_router(calendar_feed.router)
 
     @app.get("/health")
     async def health() -> dict:

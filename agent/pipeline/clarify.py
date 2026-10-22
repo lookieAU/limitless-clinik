@@ -3,6 +3,7 @@ from datetime import date
 from agent.llm.types import Intent
 from agent.pipeline.conflicts import ClaimView, Conflict, Option, option_matches, view
 from agent.pipeline.consent import clinic_today
+from agent.pipeline.resolve_target import narrow
 from agent.pipeline.state import TurnState
 from agent.pipeline.templates import text
 from agent.repo import claims, sessions, verified
@@ -63,8 +64,12 @@ def pick(state: TurnState, data: dict) -> int | None:
     if choice and 1 <= choice <= len(data["options"]):
         return choice - 1
     if data["kind"] == "target":
+        rows = [verified.get(state.conn, booking_id) for booking_id in data["options"]]
         refs = {c["value"].upper() for c in state.new_claims if c["subject"] == "booking_ref"}
-        hits = [i for i, booking_id in enumerate(data["options"]) if (row := verified.get(state.conn, booking_id)) and row["ref"].upper() in refs]
+        hits = [i for i, row in enumerate(rows) if row and row["ref"].upper() in refs]
+        if not hits:
+            narrowed = narrow(state, rows)
+            hits = [rows.index(narrowed[0])] if len(narrowed) == 1 else []
         return hits[0] if len(hits) == 1 else None
     answer = [view(c) for c in state.new_claims]
     today = clinic_today(state, state.ctx.registry.default().id)
