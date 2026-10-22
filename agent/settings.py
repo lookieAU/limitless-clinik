@@ -26,6 +26,10 @@ class AgentSettings:
     model_cache: str = "/data/models"
     background_tasks: bool = True
     replay_url: str = "http://localhost:8002/replay"
+    google_client_id: str = ""
+    google_client_secret: str = ""
+    google_refresh_token: str = ""
+    google_calendar_id: str = "primary"
 
     @classmethod
     def from_env(cls) -> "AgentSettings":
@@ -45,4 +49,8 @@ class AgentSettings:
             embedder=os.environ.get("EMBEDDER", cls.embedder),
             model_cache=os.environ.get("MODEL_CACHE", cls.model_cache),
             replay_url=os.environ.get("REPLAY_URL", cls.replay_url),
+            google_client_id=os.environ.get("GOOGLE_CLIENT_ID", ""),
+            google_client_secret=os.environ.get("GOOGLE_CLIENT_SECRET", ""),
+            google_refresh_token=os.environ.get("GOOGLE_REFRESH_TOKEN", ""),
+            google_calendar_id=os.environ.get("GOOGLE_CALENDAR_ID", cls.google_calendar_id),
         )

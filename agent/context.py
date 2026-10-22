@@ -52,6 +52,20 @@ def build_llm(settings: AgentSettings) -> LLMProvider:
     return ScriptedProvider()
 
 
+def build_calendar_sync(settings: AgentSettings):
+    if not (settings.google_client_id and settings.google_client_secret and settings.google_refresh_token):
+        return None
+    from agent.gcal import CalendarSync
+
+    return CalendarSync(
+        httpx.AsyncClient(timeout=10.0),
+        settings.google_client_id,
+        settings.google_client_secret,
+        settings.google_refresh_token,
+        settings.google_calendar_id,
+    )
+
+
 def build_context(
     settings: AgentSettings | None = None,
     clock: Clock | None = None,
@@ -75,4 +89,5 @@ def build_context(
         embedder=embedder or build_embedder(settings.embedder, settings.model_cache),
         bus=Bus(),
         http=http,
+        calendar_sync=build_calendar_sync(settings),
     )
