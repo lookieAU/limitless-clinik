@@ -1,0 +1,40 @@
+name: clinik
+
+x-service: &service
+  build: .
+  image: clinik:local
+  env_file:
+    - path: .env
+      required: false
+  environment:
+    DEMO_NOW: ${DEMO_NOW:-2026-11-02T03:30:00Z}
+
+services:
+  clinic:
+    <<: *service
+    command: ["uvicorn", "--factory", "clinic.app:create_app", "--host", "0.0.0.0", "--port", "8001"]
+    ports: ["8001:8001"]
+    volumes: ["clinic-data:/data"]
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8001/health')"]
+      interval: 3s
+      timeout: 2s
+      retries: 10
+
+  agent:
+    <<: *service
+    command: ["uvicorn", "--factory", "agent.app:create_app", "--host", "0.0.0.0", "--port", "8000"]
+    ports: ["8000:8000"]
+    volumes: ["agent-data:/data"]
+    depends_on:
+      clinic:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      interval: 3s
+      timeout: 2s
+      retries: 10
+
+volumes:
+  clinic-data:
+  agent-data:
