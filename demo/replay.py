@@ -12,6 +12,7 @@ from agent.llm.scripted import ScriptedProvider
 from agent.memory.lossy import LossySummarizer
 from agent.memory.summarize import summarize
 from agent.repo import users
+from agent.settings import AgentSettings
 from agent.ui.view import claim_rows, verified_rows
 from demo.harness import Harness, build_harness
 
@@ -43,7 +44,7 @@ def scripted(timeline: dict) -> ScriptedProvider:
 def live_provider():
     from agent.llm.anthropic_provider import AnthropicProvider
 
-    return AnthropicProvider(os.environ["ANTHROPIC_API_KEY"], os.environ.get("ANTHROPIC_MODEL", "claude-opus-5-5"))
+    return AnthropicProvider(os.environ["ANTHROPIC_API_KEY"], os.environ.get("ANTHROPIC_MODEL", AgentSettings.anthropic_model))
 
 
 class Replay:

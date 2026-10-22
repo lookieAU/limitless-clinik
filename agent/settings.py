@@ -16,7 +16,7 @@ class AgentSettings:
     enabled_clinics: tuple[str, ...] = ("clinic_a",)
     llm_provider: str = "scripted"
     anthropic_api_key: str = ""
-    anthropic_model: str = "claude-opus-5-5"
+    anthropic_model: str = "claude-haiku-5-5"
     anthropic_effort: str = "medium"
     freshness_ttl_s: float = 120.0
     clinic_timeout_s: float = 3.0

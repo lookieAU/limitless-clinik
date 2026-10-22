@@ -3,6 +3,7 @@ import os
 import pytest
 
 from agent.llm.anthropic_provider import AnthropicProvider
+from agent.settings import AgentSettings
 
 pytestmark = [
     pytest.mark.live,
@@ -12,7 +13,7 @@ pytestmark = [
 
 @pytest.fixture
 async def live(make_harness):
-    provider = AnthropicProvider(os.environ["ANTHROPIC_API_KEY"], os.environ.get("ANTHROPIC_MODEL", "claude-opus-5-5"))
+    provider = AnthropicProvider(os.environ["ANTHROPIC_API_KEY"], os.environ.get("ANTHROPIC_MODEL", AgentSettings.anthropic_model))
     return await make_harness(llm=provider, clinic_timeout_s=5.0)
 
 

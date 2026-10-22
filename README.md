@@ -6,7 +6,7 @@ confirmed. The trust rules live in code, not in the prompt, so every scenario pa
 ## Run
 
 ```bash
-cp .env.example .env          # add ANTHROPIC_API_KEY for live chat; everything else has demo defaults
+cp .env.example .env          # add ANTHROPIC_API_KEY; default model is claude-haiku-5-5 (ANTHROPIC_MODEL to change)
 docker compose up --build     # clinic :8001, agent UI :8000, scripted replay :8002
 ```
 
