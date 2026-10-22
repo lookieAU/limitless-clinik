@@ -16,7 +16,8 @@ class AgentSettings:
     enabled_clinics: tuple[str, ...] = ("clinic_a",)
     llm_provider: str = "scripted"
     anthropic_api_key: str = ""
-    anthropic_model: str = "claude-sonnet-5-5"
+    anthropic_model: str = "claude-opus-5-5"
+    anthropic_effort: str = "medium"
     freshness_ttl_s: float = 120.0
     clinic_timeout_s: float = 3.0
     sync_gap_s: float = 600.0
@@ -37,6 +38,7 @@ class AgentSettings:
             llm_provider=os.environ.get("LLM_PROVIDER", cls.llm_provider),
             anthropic_api_key=os.environ.get("ANTHROPIC_API_KEY", ""),
             anthropic_model=os.environ.get("ANTHROPIC_MODEL", cls.anthropic_model),
+            anthropic_effort=os.environ.get("ANTHROPIC_EFFORT", cls.anthropic_effort),
             freshness_ttl_s=float(os.environ.get("FRESHNESS_TTL_S", cls.freshness_ttl_s)),
             clinic_timeout_s=float(os.environ.get("CLINIC_TIMEOUT_S", cls.clinic_timeout_s)),
             embedder=os.environ.get("EMBEDDER", cls.embedder),

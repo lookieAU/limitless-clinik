@@ -42,6 +42,7 @@ class ToolCall(BaseModel):
 class AssistantStep(BaseModel):
     tool_calls: list[ToolCall] = Field(default_factory=list)
     text: str = ""
+    raw: list | None = None
 
 
 class PlanMessage(BaseModel):
@@ -49,6 +50,7 @@ class PlanMessage(BaseModel):
     text: str = ""
     tool_calls: list[ToolCall] = Field(default_factory=list)
     tool_call_id: str | None = None
+    raw: list | None = None
 
 
 class ExtractRequest(BaseModel):

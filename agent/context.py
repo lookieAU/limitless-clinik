@@ -47,7 +47,7 @@ def build_llm(settings: AgentSettings) -> LLMProvider:
         if settings.anthropic_api_key:
             from agent.llm.anthropic_provider import AnthropicProvider
 
-            return AnthropicProvider(settings.anthropic_api_key, settings.anthropic_model)
+            return AnthropicProvider(settings.anthropic_api_key, settings.anthropic_model, settings.anthropic_effort)
         log.warning("LLM_PROVIDER=anthropic but ANTHROPIC_API_KEY is empty; using the scripted provider")
     return ScriptedProvider()
 
