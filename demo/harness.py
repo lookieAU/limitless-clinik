@@ -5,14 +5,16 @@ from pathlib import Path
 import httpx
 
 from agent.app import create_app as create_agent_app
-from agent.context import AgentContext, build_context as build_agent_context
+from agent.context import AgentContext
+from agent.context import build_context as build_agent_context
 from agent.llm.scripted import ScriptedProvider
 from agent.llm.types import LLMProvider
 from agent.memory.embedder import HashEmbedder
 from agent.repo.audit import events_of_type
 from agent.settings import AgentSettings
 from clinic.app import create_app as create_clinic_app
-from clinic.context import ClinicContext, build_context as build_clinic_context
+from clinic.context import ClinicContext
+from clinic.context import build_context as build_clinic_context
 from clinic.settings import ClinicSettings
 from shared.clock import FixedClock
 from shared.sqlite import many

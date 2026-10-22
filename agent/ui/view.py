@@ -30,7 +30,6 @@ def verified_rows(ctx, user: dict) -> list[dict]:
                 **row,
                 "when": format_dual(parse_utc(row["slot"]["start_utc"]), tz, ZoneInfo(user["tz"])),
                 "observed_ago": ago(ctx, row["observed_utc"]),
-                "fresh": verified.is_fresh(row, ctx.clock.now(), ctx.settings.freshness_ttl_s, None) or row["source"] == "api",
             }
         )
     return rows

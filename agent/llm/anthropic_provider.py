@@ -3,7 +3,7 @@ import json
 import anthropic
 
 from agent.llm.prompts import EXTRACT_SYSTEM, STRICT_SUFFIX, SUMMARY_SYSTEM
-from agent.llm.types import AssistantStep, ExtractRequest, Extraction, PlanMessage, PlanRequest, SummaryRequest, ToolCall
+from agent.llm.types import AssistantStep, Extraction, ExtractRequest, PlanMessage, PlanRequest, SummaryRequest, ToolCall
 
 FALLBACK_BETA = "server-side-fallback-2026-07-01"
 FALLBACK_MODELS = ("claude-opus-5-5", "claude-opus-5", "claude-fable-5-1", "claude-sonnet-5-5")

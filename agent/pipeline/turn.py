@@ -1,7 +1,6 @@
 from pydantic import BaseModel
 
 from agent.llm.types import Intent
-
 from agent.pipeline import compose
 from agent.pipeline.clarify import ask_conflict, resolve_pending
 from agent.pipeline.conflicts import apply_claims, view

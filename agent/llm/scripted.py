@@ -1,6 +1,6 @@
 from collections import defaultdict, deque
 
-from agent.llm.types import AssistantStep, ExtractRequest, Extraction, PlanRequest, SummaryRequest
+from agent.llm.types import AssistantStep, Extraction, ExtractRequest, PlanRequest, SummaryRequest
 from agent.memory.render import render_summary
 
 

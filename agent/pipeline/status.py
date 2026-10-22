@@ -1,3 +1,5 @@
+from datetime import timedelta
+
 from agent.notices import mark_delivered, undelivered
 from agent.pipeline.compose import ago
 from agent.pipeline.conflicts import candidate_dates, view
@@ -8,7 +10,6 @@ from agent.pipeline.verify_reply import prose_violations, stale_bookings
 from agent.repo import claims, offers, verified
 from agent.tools.reads import option_list, refresh_booking
 from shared.time import parse_utc, to_local
-from datetime import timedelta
 
 REBOOK_DAYS = 14
 REBOOK_OPTIONS = 3

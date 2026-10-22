@@ -1,6 +1,6 @@
 import re
 
-from agent.llm.types import ClaimDraft, ExtractRequest, Extraction
+from agent.llm.types import ClaimDraft, Extraction, ExtractRequest
 from agent.pipeline.state import TurnState
 from agent.repo import claims, messages, offers
 from agent.vocab import DAY_FORMS, WEEKDAYS

@@ -3,7 +3,7 @@ import asyncio
 import os
 import tempfile
 from dataclasses import dataclass, field
-from datetime import date, timedelta
+from datetime import date
 from pathlib import Path
 
 import yaml
