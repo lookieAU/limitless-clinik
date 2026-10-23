@@ -1,14 +1,32 @@
 {% extends "base.html" %}
 {% block title %}Replay · Clinik by Limitless{% endblock %}
-{% block nav %}<span class="muted">{{ timeline.title }} · scripted LLM · fixed clock · isolated databases</span>{% endblock %}
+{% block nav %}<span class="muted">{{ timeline.title }}</span>{% endblock %}
 {% block body %}
 <div class="layout">
-  <section>
-    <div id="steps"></div>
-    <div id="controls">
-      <button class="primary" hx-post="/replay/start" hx-target="#controls" hx-swap="outerHTML" hx-on::after-request="document.getElementById('steps').innerHTML=''">Start replay</button>
-    </div>
+  <section class="conversation">
+    <div id="steps" class="messages"><p class="muted">A scripted run of the whole story, with its own clinic and database. Press start.</p></div>
+    <div class="composer voice"><button id="next" class="primary">Start replay</button></div>
   </section>
-  <aside id="panels"><p class="muted">Panels show what the agent knows after each step.</p></aside>
+  <aside id="replay-panels"><p class="muted">What the agent knows appears here after each step.</p></aside>
 </div>
+<script>
+  const next = document.getElementById("next");
+  const steps = document.getElementById("steps");
+  let running = false;
+  next.addEventListener("click", async () => {
+    next.disabled = true;
+    if (!running) {
+      await fetch("/replay/start", { method: "POST" });
+      steps.innerHTML = "";
+      running = true;
+    }
+    const data = await (await fetch("/replay/next", { method: "POST" })).json();
+    steps.insertAdjacentHTML("beforeend", data.step);
+    document.getElementById("replay-panels").innerHTML = data.panels;
+    steps.scrollTop = steps.scrollHeight;
+    running = !data.done;
+    next.textContent = data.done ? "Run again" : `Step ${data.position + 1} of ${data.total} →`;
+    next.disabled = false;
+  });
+</script>
 {% endblock %}

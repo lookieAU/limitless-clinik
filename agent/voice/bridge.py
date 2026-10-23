@@ -8,7 +8,7 @@ from agent.pipeline.language import detect_language
 CONFIDENCE_FLOOR = 0.85
 YES = frozenset("yes yeah yep yup right correct sure haan haa ha ji sahi bilkul हाँ हां जी सही".split())
 GOODBYE = frozenset("bye goodbye thanks thank dhanyavaad dhanyawad shukriya अलविदा धन्यवाद शुक्रिया".split())
-FILLER = {"en": "One moment — checking with the clinic.", "hi": "एक पल — क्लिनिक से जाँच रहा हूँ।"}
+FILLER = {"en": "One moment.", "hi": "एक पल।"}
 CONFIRM = {"en": "Just to be sure, you said: “{text}”. Is that right?", "hi": "पक्का कर लूँ, आपने कहा: “{text}”. सही है?"}
 
 
@@ -49,6 +49,11 @@ class VoiceBridge:
             response = await self.client.post("/api/login/code", json={"user_id": self.user_id})
         response.raise_for_status()
         (await self.client.post("/api/login", json={"user_id": self.user_id, "code": response.json()["code"]})).raise_for_status()
+
+    async def preferred_lang(self) -> str:
+        response = await self.client.get("/api/state")
+        response.raise_for_status()
+        return "hi" if response.json()["user"]["preferred_lang"] == "hi" else "en"
 
     async def send(self, text: str, recap: bool = False) -> VoiceReply:
         lang = detect_language(text)

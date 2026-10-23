@@ -1,8 +1,8 @@
-<article class="replay-step">
-  <h3>Step {{ step.index }}</h3>
-  <p class="narration">{{ step.narrate }}</p>
-  {% for note in step.notes %}<p class="muted small">• {{ note }}</p>{% endfor %}
-  {% if pair %}<div class="messages">{% include "_message.html" %}</div>{% endif %}
-</article>
-{% set oob = true %}{% include "_replay_controls.html" %}
-<aside id="panels" hx-swap-oob="innerHTML">{% include "_panels.html" %}</aside>
+<div class="replay-step">
+  <p class="narration"><strong>Step {{ step.index }}.</strong> {{ step.narrate }}</p>
+  {% for note in step.notes %}<p class="muted"><small>• {{ note }}</small></p>{% endfor %}
+  {% if step.said %}
+  <div class="bubble customer"><p>{{ step.said }}</p></div>
+  {% include "_agent.html" %}
+  {% endif %}
+</div>

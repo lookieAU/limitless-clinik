@@ -1,50 +1,15 @@
 <section class="panel">
-  <h2>Verified <span class="muted small">from the clinic · fresh ≤ {{ ttl }}s</span></h2>
-  {% if not verified %}<p class="muted">Nothing verified yet.</p>{% endif %}
-  {% for row in verified %}
-  <div class="row">
-    <span class="badge status-{{ row.status }}">{{ row.status }}</span>
-    <div>
-      <strong>{{ row.ref }}</strong> · {{ row.slot.doctor_name }}<br>
-      <span>{{ row.when }}</span><br>
-      <span class="muted small">via {{ row.source }} · observed {{ row.observed_ago }} · v{{ row.version }} · {{ row.clinic_id }}</span>
-    </div>
+  <h2>Appointments <small>checked with the clinic</small></h2>
+  {% for row in appointments %}
+  <div class="appt">
+    <span class="pill {{ row.status }}">{{ row.status }}</span>
+    <div><strong>{{ row.doctor }}</strong><br>{{ row.when }}<br><small class="muted">{{ row.ref }} · checked {{ row.checked }}</small></div>
   </div>
-  {% endfor %}
+  {% else %}<p class="muted">No appointments yet.</p>{% endfor %}
 </section>
 <section class="panel">
-  <h2>Claimed <span class="muted small">what the customer said</span></h2>
-  {% if not claims %}<p class="muted">No claims yet.</p>{% endif %}
-  {% for claim in claims %}
-  <div class="row claim-{{ claim.status }}">
-    <span class="badge {{ claim.polarity }}">{{ "NOT" if claim.polarity == "negative" else "YES" }}</span>
-    <div>
-      <strong>{{ claim.label }}</strong> <span class="muted">“{{ claim.raw_text }}”</span><br>
-      <span class="muted small">{{ claim.status }}{% if claim.overridden_by_event %} by clinic event{% endif %} · {{ claim.lang }} · {{ claim.said_ago }}</span>
-    </div>
-  </div>
-  {% endfor %}
-</section>
-<section class="panel">
-  <h2>Memory <span class="muted small">nightly summaries (claims only)</span></h2>
-  {% if not summaries["items"] %}<p class="muted">No summaries yet.</p>{% endif %}
-  {% for item in summaries["items"] %}
-  <div class="row">
-    <span class="badge {{ 'verified' if item.validated else 'rejected' }}">{{ "kept" if item.validated else "rejected" }}</span>
-    <div>
-      <span>{{ item.prose }}</span><br>
-      <span class="muted small">{{ item.day_local }}{% if item.id == summaries.active %} · in use{% endif %}{% if not item.validated %} · {{ item.errors_json }}{% endif %}</span>
-    </div>
-  </div>
-  {% endfor %}
-</section>
-<section class="panel">
-  <h2>Event log</h2>
-  <ul class="events">
-    {% for event in events %}
-    <li class="event-{{ event.type }}"><code>{{ event.type }}</code> <span class="muted small">{{ event.created_utc[11:19] }}</span>
-      {% if event.type in ("gate_refused", "injection_flag", "reply_blocked", "authz_denied", "summary_rejected", "clarification_asked", "webhook_received", "clinic_change") %}<span class="small">{{ event.payload | tojson }}</span>{% endif %}
-    </li>
-    {% endfor %}
-  </ul>
+  <h2>What you've told us <small>not yet checked facts</small></h2>
+  {% for item in told_us %}
+  <div class="said"><span class="pill {{ 'no' if item.negative else 'yes' }}">{{ "not" if item.negative else "wants" }}</span> {{ item.label }} <small class="muted">“{{ item.raw }}”</small></div>
+  {% else %}<p class="muted">Nothing yet.</p>{% endfor %}
 </section>

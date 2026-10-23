@@ -16,6 +16,7 @@ HANDLERS = {
 
 async def execute_tool(state: TurnState, call: ToolCall) -> dict:
     handler = HANDLERS.get(call.name)
+    state.tools.append(call.name)
     state.log("tool_call", {"name": call.name, "args": call.args})
     if handler is None:
         return {"ok": False, "error": "unknown_tool"}

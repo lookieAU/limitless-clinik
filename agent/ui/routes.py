@@ -1,36 +1,24 @@
 import asyncio
-import json
 from pathlib import Path
 
 from fastapi import APIRouter, Form, Request
-from fastapi.responses import HTMLResponse, RedirectResponse, Response
+from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse, Response
 from fastapi.templating import Jinja2Templates
 from sse_starlette.sse import EventSourceResponse
 
-from agent.auth import current_auth, login_code, start_session
+from agent.auth import COOKIE, current_auth, login_code, start_session
 from agent.pipeline.turn import turn
-from agent.repo import messages, users
-from agent.ui.view import panel_context, paragraphs
+from agent.repo import users
+from agent.ui.view import history, panel_context, reply_view
+from agent.voice.token import voice_token
 
 templates = Jinja2Templates(directory=Path(__file__).parent / "templates")
 router = APIRouter()
+MODES = ("chat", "voice")
 
 
 def render(request: Request, name: str, **context) -> HTMLResponse:
     return templates.TemplateResponse(request, name, context)
-
-
-def history(ctx, session_id: str) -> list[dict]:
-    items = []
-    for row in messages.transcript(ctx.conn, session_id):
-        result = json.loads(row["result_json"]) if row["result_json"] else None
-        items.append({"role": row["role"], "text": row["text"], "paragraphs": paragraphs(row["text"]), "result": result})
-    pairs = []
-    for index, item in enumerate(items):
-        if item["role"] == "customer":
-            reply = items[index + 1] if index + 1 < len(items) and items[index + 1]["role"] == "agent" else None
-            pairs.append({"customer": item, "agent": reply})
-    return pairs
 
 
 @router.get("/", response_class=HTMLResponse)
@@ -61,28 +49,37 @@ async def login_verify(request: Request, user_id: str = Form(...), code: str = F
     return response
 
 
+@router.get("/logout")
+async def logout() -> Response:
+    response = RedirectResponse("/login", status_code=303)
+    response.delete_cookie(COOKIE)
+    return response
+
+
 @router.post("/session/new")
-async def new_session(request: Request) -> Response:
+async def new_session(request: Request, mode: str = "chat") -> Response:
     auth = current_auth(request)
-    response = RedirectResponse("/chat" if auth else "/login", status_code=303)
-    if auth:
-        start_session(request, response, auth.user)
+    if auth is None:
+        return RedirectResponse("/login", status_code=303)
+    response = RedirectResponse(f"/chat?mode={mode if mode in MODES else 'chat'}", status_code=303)
+    start_session(request, response, auth.user)
     return response
 
 
 @router.get("/chat", response_class=HTMLResponse)
-async def chat_page(request: Request) -> Response:
+async def chat_page(request: Request, mode: str = "chat") -> Response:
     auth = current_auth(request)
     if auth is None:
         return RedirectResponse("/login", status_code=303)
     ctx = request.app.state.ctx
+    mode = mode if mode in MODES and (mode != "voice" or ctx.settings.voice_enabled) else "chat"
     return render(
         request,
         "chat.html",
         user=auth.user,
-        session=auth.session,
+        mode=mode,
+        voice_enabled=ctx.settings.voice_enabled,
         pairs=history(ctx, auth.session["id"]),
-        clinics=ctx.registry.enabled_ids,
         **panel_context(ctx, auth.user),
     )
 
@@ -93,13 +90,7 @@ async def send(request: Request, text: str = Form(...), client_msg_id: str = For
     if auth is None:
         return Response(status_code=401)
     result = await turn(request.app.state.ctx, auth.user, auth.session, text.strip(), client_msg_id or None)
-    pair = {
-        "customer": {"text": text, "paragraphs": [text]},
-        "agent": {"paragraphs": paragraphs(result.reply), "result": result.model_dump()},
-    }
-    response = render(request, "_message.html", pair=pair)
-    response.headers["HX-Trigger"] = "panels"
-    return response
+    return render(request, "_agent.html", reply=reply_view(result.reply, result.model_dump()))
 
 
 @router.get("/ui/panels", response_class=HTMLResponse)
@@ -107,7 +98,16 @@ async def panels(request: Request) -> Response:
     auth = current_auth(request)
     if auth is None:
         return Response(status_code=401)
-    return render(request, "_panels.html", user=auth.user, **panel_context(request.app.state.ctx, auth.user))
+    return render(request, "_panels.html", **panel_context(request.app.state.ctx, auth.user))
+
+
+@router.get("/ui/voice/token")
+async def voice(request: Request) -> Response:
+    auth = current_auth(request)
+    settings = request.app.state.ctx.settings
+    if auth is None or not settings.voice_enabled:
+        return Response(status_code=404)
+    return JSONResponse(voice_token(settings, auth.user["id"], auth.session["id"]))
 
 
 @router.get("/ui/stream")

@@ -12,7 +12,7 @@ from agent.memory.lossy import LossySummarizer
 from agent.memory.summarize import summarize
 from agent.repo import users
 from agent.settings import AgentSettings
-from agent.ui.view import claim_rows, verified_rows
+from agent.ui.view import appointments, told_us
 from demo.harness import Harness, build_harness
 
 TIMELINE = Path(__file__).parent / "timeline.yaml"
@@ -99,12 +99,12 @@ async def build_replay(directory: Path, live: bool = False, timeline: dict | Non
 
 def print_panels(replay: Replay) -> None:
     ctx, user = replay.harness.agent_ctx, replay.user
-    print("  VERIFIED:")
-    for row in verified_rows(ctx, user) or [{"ref": "-", "status": "none", "when": "", "source": "", "observed_ago": ""}]:
-        print(f"    {row['ref']:8} {row['status']:10} {row['when']}  (via {row['source']}, {row['observed_ago']})")
-    print("  CLAIMED:")
-    for claim in reversed(claim_rows(ctx, user)):
-        print(f"    {claim['label']:28} {claim['status']:11} said: {claim['raw_text']}")
+    print("  VERIFIED (clinic):")
+    for row in appointments(ctx, user) or [{"ref": "-", "status": "none", "when": "", "checked": ""}]:
+        print(f"    {row['ref']:8} {row['status']:10} {row['when']}  (checked {row['checked']})")
+    print("  CLAIMED (customer said):")
+    for item in told_us(ctx, user):
+        print(f"    {'NOT ' if item['negative'] else ''}{item['label']:24} said: {item['raw']}")
 
 
 async def main() -> None:

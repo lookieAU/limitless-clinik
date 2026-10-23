@@ -1,43 +1,37 @@
 name: clinik
 
-x-service: &service
+x-app: &app
   build: .
   image: clinik:local
+  restart: unless-stopped
   env_file:
     - path: .env
       required: false
-  environment:
-    DEMO_NOW: ${DEMO_NOW:-2026-11-02T03:30:00Z}
-    CLINIC_API_KEY: ${CLINIC_API_KEY:-dev-clinic-key}
-    WEBHOOK_SECRET: ${WEBHOOK_SECRET:-dev-webhook-secret}
+
+x-health: &health
+  interval: 3s
+  timeout: 2s
+  retries: 20
 
 services:
   clinic:
-    <<: *service
+    <<: *app
     command: ["uvicorn", "--factory", "clinic.app:create_app", "--host", "0.0.0.0", "--port", "8001"]
     ports: ["8001:8001"]
     volumes: ["clinic-data:/data"]
     environment:
-      DEMO_NOW: ${DEMO_NOW:-2026-11-02T03:30:00Z}
-      CLINIC_API_KEY: ${CLINIC_API_KEY:-dev-clinic-key}
-      WEBHOOK_SECRET: ${WEBHOOK_SECRET:-dev-webhook-secret}
       CLINIC_DB_PATH: /data/clinic.db
       AGENT_WEBHOOK_URL: http://agent:8000/webhooks/clinic
     healthcheck:
+      <<: *health
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8001/health')"]
-      interval: 3s
-      timeout: 2s
-      retries: 20
 
   agent:
-    <<: *service
+    <<: *app
     command: ["uvicorn", "--factory", "agent.app:create_app", "--host", "0.0.0.0", "--port", "8000"]
     ports: ["8000:8000"]
     volumes: ["agent-data:/data"]
     environment:
-      DEMO_NOW: ${DEMO_NOW:-2026-11-02T03:30:00Z}
-      CLINIC_API_KEY: ${CLINIC_API_KEY:-dev-clinic-key}
-      WEBHOOK_SECRET: ${WEBHOOK_SECRET:-dev-webhook-secret}
       AGENT_DB_PATH: /data/agent.db
       CLINIC_BASE_URL: http://clinic:8001
       MODEL_CACHE: /data/models
@@ -45,32 +39,22 @@ services:
       clinic:
         condition: service_healthy
     healthcheck:
+      <<: *health
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
-      interval: 3s
-      timeout: 2s
-      retries: 20
-
-  replay:
-    <<: *service
-    command: ["uvicorn", "--factory", "demo.web:create_app", "--host", "0.0.0.0", "--port", "8002"]
-    ports: ["8002:8002"]
 
   voice:
-    profiles: ["voice"]
-    build:
-      context: .
-      args:
-        EXTRAS: voice
-    image: clinik-voice:local
+    <<: *app
     command: ["python", "-m", "agent.voice.livekit_worker", "start"]
-    env_file:
-      - path: .env
-        required: false
     environment:
       AGENT_URL: http://agent:8000
     depends_on:
       agent:
         condition: service_healthy
+
+  replay:
+    <<: *app
+    command: ["uvicorn", "--factory", "demo.web:create_app", "--host", "0.0.0.0", "--port", "8002"]
+    ports: ["8002:8002"]
 
 volumes:
   clinic-data:

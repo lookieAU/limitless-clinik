@@ -40,6 +40,7 @@ class TurnState:
     prose: str = ""
     injection: InjectionScan | None = None
     proposals: list = field(default_factory=list)
+    tools: list[str] = field(default_factory=list)
     plan_messages: list = field(default_factory=list)
 
     @property

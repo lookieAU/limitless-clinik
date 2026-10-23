@@ -1,0 +1,9 @@
+<div class="bubble agent">
+  {% for paragraph in reply.paragraphs %}<p>{{ paragraph }}</p>{% endfor %}
+  {% if reply.chips or reply.tools %}
+  <div class="chips">
+    {% for chip in reply.chips %}<span class="chip {{ chip.kind }}">{{ "✓ Clinic" if chip.kind == "clinic" else "You said" }}: {{ chip.text }}</span>{% endfor %}
+    {% if reply.tools %}<span class="chip tools">⚙ {{ reply.tools | join(" · ") }}</span>{% endif %}
+  </div>
+  {% endif %}
+</div>

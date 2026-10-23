@@ -6,18 +6,20 @@ confirmed. The trust rules live in code, not in the prompt, so every scenario pa
 ## Run
 
 ```bash
-cp .env.example .env          # add OPENROUTER_API_KEY (or LLM_PROVIDER=anthropic + ANTHROPIC_API_KEY)
-docker compose up --build     # clinic :8001, agent UI :8000, scripted replay :8002
+cp .env.example .env     # add OPENROUTER_API_KEY and the LIVEKIT_* values
+docker compose up --build
 ```
 
-- Chat UI: <http://localhost:8000> (pick a seeded customer, use the code shown). Admin console at `/admin`:
-  clinic-side cancel (with or without losing the webhook), fault injection, clock jump, nightly summary
-  (and the lossy version), enable Clinic B, reset.
-- Replay: <http://localhost:8002/replay>, or in the terminal `uv run python -m demo.replay` (`--live` uses the real LLM).
-- Tests: `uv run pytest` (scripted LLM, fixed clock) · `uv run pytest -m live` (same guarantees against the real model).
-- Model: Claude Haiku 5.5 by default, via OpenRouter (`OPENROUTER_MODEL`) or the Anthropic API (`LLM_PROVIDER=anthropic`, `ANTHROPIC_MODEL`). Quality comes from context (prompt examples, labelled history, deterministic guards), not a bigger model.
-- Voice (optional): fill the `LIVEKIT_*` values, then `docker compose --profile voice up`, open the LiveKit Agents Playground for your project and dispatch agent `clinik`. Join with identity `u_asha`/`u_ravi`/`u_mei` (anything else uses `VOICE_DEFAULT_USER`).
-- Nightly summary by hand: `docker compose exec agent python -m agent.memory.summarize --user c_asha --date 2026-11-02`.
+One command starts the clinic (:8001), the agent with its chat UI (:8000), the voice worker and the scripted
+replay (:8002).
+
+- Open <http://localhost:8000>, pick a customer, enter the code shown. Use the **Chat / Voice** switch at the top;
+  switching always starts a fresh conversation. Voice runs in the browser (allow the microphone).
+- **Demo controls** (top bar): clinic cancels a booking (with or without losing the webhook), make the next booking
+  time out, jump a day, run the nightly summary (or a broken one that drops "not"), enable the second clinic, reset.
+- **Replay**: <http://localhost:8002/replay> steps through "the appointment that changed four times".
+- Tests: `uv run pytest` (scripted model, fixed clock) · `uv run pytest -m live` (real model).
+- Model: Claude Haiku 5.5 via OpenRouter by default (`OPENROUTER_MODEL`), or the Anthropic API (`LLM_PROVIDER=anthropic`).
 
 ## State model
 

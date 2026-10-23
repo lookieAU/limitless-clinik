@@ -1,67 +1,100 @@
+import json
 from zoneinfo import ZoneInfo
 
-from agent.memory.load import load_memory
-from agent.repo import claims, verified
+from agent.repo import claims, messages, verified
 from agent.repo.audit import recent_events
-from agent.vocab import claim_label
-from shared.sqlite import many
+from agent.vocab import value_label
 from shared.time import format_dual, parse_utc
+
+ACTIVITY = {
+    "injection_flag": "Prompt-injection attempt spotted — treated as plain text, nothing executed",
+    "gate_refused": "Policy gate blocked a tool call ({code})",
+    "reply_blocked": "Model tried to state a status it hadn't verified — blocked and re-checked",
+    "authz_denied": "Attempt to touch another customer's booking — denied",
+    "summary_rejected": "Nightly summary rejected: {errors}",
+    "summary_written": "Nightly summary saved",
+    "clarification_asked": "Asked one clarifying question; changes locked until answered",
+    "clarification_resolved": "Clarification answered",
+    "webhook_received": "Clinic webhook received ({type})",
+    "clinic_change": "Clinic changed booking {ref} ({transition}) — earlier claims overridden",
+    "clinic_write": "Sent a {action} to the clinic",
+    "write_unknown": "Clinic timed out — checking before any retry",
+    "reconciled": "Reconciled with the clinic (found: {found})",
+    "status_recheck": "Re-checked booking status with the clinic",
+    "notices_delivered": "Told the customer about a clinic change first",
+    "offer_accepted": "Customer accepted an offered slot",
+}
 
 
 def ago(ctx, stamp: str) -> str:
     seconds = int((ctx.clock.now() - parse_utc(stamp)).total_seconds())
-    if seconds < 10:
+    if seconds < 60:
         return "just now"
-    if seconds < 120:
-        return f"{seconds}s ago"
-    if seconds < 7200:
+    if seconds < 3600:
         return f"{seconds // 60} min ago"
-    if seconds < 172800:
+    if seconds < 86400:
         return f"{seconds // 3600} h ago"
-    return f"{seconds // 86400} days ago"
+    return f"{seconds // 86400} d ago"
 
 
-def verified_rows(ctx, user: dict) -> list[dict]:
+def appointments(ctx, user: dict) -> list[dict]:
     rows = []
     for row in verified.for_customer(ctx.conn, user["customer_id"]):
         tz = ctx.registry.get(row["clinic_id"]).tz
-        rows.append(
-            {
-                **row,
-                "when": format_dual(parse_utc(row["slot"]["start_utc"]), tz, ZoneInfo(user["tz"])),
-                "observed_ago": ago(ctx, row["observed_utc"]),
-            }
-        )
+        when = format_dual(parse_utc(row["slot"]["start_utc"]), tz, ZoneInfo(user["tz"]))
+        rows.append({"ref": row["ref"], "status": row["status"], "doctor": row["slot"]["doctor_name"], "when": when, "checked": ago(ctx, row["observed_utc"])})
     return rows
 
 
-def claim_rows(ctx, user: dict) -> list[dict]:
+def told_us(ctx, user: dict) -> list[dict]:
+    rows = claims.live_for_user(ctx.conn, user["id"])
     return [
-        {**row, "label": claim_label(row, "en"), "said_ago": ago(ctx, row["created_utc"])}
-        for row in claims.all_for_user(ctx.conn, user["id"], limit=40)
+        {"label": value_label(row["subject"], row["value"], "en"), "negative": row["polarity"] == "negative", "raw": row["raw_text"]}
+        for row in reversed(rows)
+        if row["subject"] != "booking_ref"
     ]
 
 
-def summary_rows(ctx, user: dict) -> dict:
-    memory = load_memory(ctx.conn, user["id"])
-    history = many(
-        ctx.conn,
-        "SELECT id, day_local, validated, prose, errors_json, created_utc FROM memory_summaries WHERE user_id = ? ORDER BY rowid DESC LIMIT 4",
-        (user["id"],),
-    )
-    return {"active": memory.summary_id, "items": history}
-
-
 def panel_context(ctx, user: dict) -> dict:
+    return {"appointments": appointments(ctx, user), "told_us": told_us(ctx, user)}
+
+
+def describe(event: dict) -> str | None:
+    template = ACTIVITY.get(event["type"])
+    if template is None:
+        return None
+    payload = {key: (", ".join(value) if isinstance(value, list) else value) for key, value in event["payload"].items()}
+    try:
+        return template.format(**payload)
+    except (KeyError, IndexError):
+        return template.split(" (")[0].split(":")[0]
+
+
+def activity(ctx, user: dict) -> list[dict]:
+    items = []
+    for event in recent_events(ctx.conn, user["id"], 60):
+        text = describe(event)
+        if text:
+            items.append({"time": event["created_utc"][11:16], "text": text, "type": event["type"]})
+    return items[:25]
+
+
+def reply_view(text: str, result: dict | None) -> dict:
+    result = result or {}
     return {
-        "verified": verified_rows(ctx, user),
-        "claims": claim_rows(ctx, user),
-        "events": recent_events(ctx.conn, user["id"], 30),
-        "summaries": summary_rows(ctx, user),
-        "now": ctx.clock.now().isoformat(timespec="seconds"),
-        "ttl": int(ctx.settings.freshness_ttl_s),
+        "paragraphs": [part for part in text.split("\n\n") if part.strip()],
+        "chips": result.get("chips", []),
+        "tools": result.get("tools", []),
     }
 
 
-def paragraphs(reply: str) -> list[str]:
-    return [part for part in reply.split("\n\n") if part.strip()]
+def history(ctx, session_id: str) -> list[dict]:
+    rows = messages.transcript(ctx.conn, session_id)
+    pairs = []
+    for index, row in enumerate(rows):
+        if row["role"] != "customer":
+            continue
+        result = json.loads(row["result_json"]) if row["result_json"] else None
+        agent = rows[index + 1] if index + 1 < len(rows) and rows[index + 1]["role"] == "agent" else None
+        pairs.append({"text": row["text"], "reply": reply_view(agent["text"], result) if agent else None})
+    return pairs

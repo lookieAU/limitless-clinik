@@ -82,6 +82,14 @@ def verified_fact(state: TurnState, row: dict) -> dict:
     }
 
 
+def chips(state: TurnState) -> list[dict]:
+    clinic = [verified.get(state.conn, booking_id) for booking_id in dict.fromkeys(state.booking_ids())]
+    said = [claim_label(claim, state.lang) for claim in state.new_claims if claim["subject"] != "booking_ref"]
+    return [{"kind": "clinic", "text": f"{row['ref']} · {row['status']}"} for row in clinic if row] + [
+        {"kind": "you", "text": text} for text in said
+    ]
+
+
 def facts(state: TurnState) -> list[dict]:
     rows = [verified.get(state.conn, booking_id) for booking_id in dict.fromkeys(state.booking_ids())]
     claimed = claims_repo.live_for_session(state.conn, state.session_id)

@@ -1,16 +1,14 @@
 {% extends "base.html" %}
 {% block body %}
 <section class="card narrow">
-  <h1>Sign in</h1>
-  <p class="muted">Pick a seeded customer. A mock one-time code is shown on the next screen.</p>
+  <h1>Who's booking?</h1>
   <form method="post" action="/login/start" class="stack">
     {% for user in users %}
     <button class="choice" name="user_id" value="{{ user.id }}">
       <strong>{{ user.display_name }}</strong>
-      <span class="muted">{{ user.tz }} · {{ "Hindi" if user.preferred_lang == "hi" else "English" }}</span>
+      <span class="muted">{{ "Hindi" if user.preferred_lang == "hi" else "English" }} · {{ user.tz }}</span>
     </button>
     {% endfor %}
   </form>
-  <p class="muted small"><a href="{{ replay_url }}">Watch the scripted replay</a> without signing in.</p>
 </section>
 {% endblock %}

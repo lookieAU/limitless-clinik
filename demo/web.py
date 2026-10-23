@@ -6,7 +6,7 @@ from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
-from agent.ui.view import panel_context, paragraphs
+from agent.ui.view import panel_context, reply_view
 from demo.replay import build_replay, load_timeline
 
 ROOT = Path(__file__).parent
@@ -29,29 +29,27 @@ def create_app() -> FastAPI:
     async def page(request: Request) -> HTMLResponse:
         return templates.TemplateResponse(request, "replay.html", {"timeline": load_timeline()})
 
-    @app.post("/replay/start", response_class=HTMLResponse)
-    async def start(request: Request) -> HTMLResponse:
+    @app.post("/replay/start")
+    async def start() -> dict:
         if app.state.replay:
             await app.state.replay.harness.close()
             app.state.workdir.cleanup()
         app.state.workdir = tempfile.TemporaryDirectory()
         app.state.replay = await build_replay(Path(app.state.workdir.name))
-        return templates.TemplateResponse(request, "_replay_controls.html", {"replay": app.state.replay, "fresh": True})
+        return {"total": len(app.state.replay.timeline["steps"])}
 
-    @app.post("/replay/next", response_class=HTMLResponse)
-    async def next_step(request: Request) -> HTMLResponse:
+    @app.post("/replay/next")
+    async def next_step() -> dict:
         replay = app.state.replay
         step = await replay.next()
-        pair = None
-        if step.said:
-            pair = {"customer": {"text": step.said}, "agent": {"paragraphs": paragraphs(step.reply), "result": step.result}}
-        context = {
-            "step": step,
-            "pair": pair,
-            "replay": replay,
-            "user": replay.user,
-            **panel_context(replay.harness.agent_ctx, replay.user),
+        reply = reply_view(step.reply, step.result) if step.said else None
+        panels = panel_context(replay.harness.agent_ctx, replay.user)
+        return {
+            "step": templates.get_template("_replay_step.html").render(step=step, reply=reply),
+            "panels": templates.get_template("_panels.html").render(**panels),
+            "position": replay.position,
+            "total": len(replay.timeline["steps"]),
+            "done": replay.done,
         }
-        return templates.TemplateResponse(request, "_replay_step.html", context)
 
     return app

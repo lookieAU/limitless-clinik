@@ -1,31 +1,37 @@
 {% extends "base.html" %}
 {% block nav %}
-  <span class="muted">{{ user.display_name }} · {{ user.tz }}</span>
-  <a href="/calendar/{{ user.ics_token }}.ics" title="Subscribe in your calendar app">Subscribe (.ics)</a>
-  <a href="/admin">Admin</a>
+  <div class="modes">
+    <form method="post" action="/session/new?mode=chat"><button class="{{ 'on' if mode == 'chat' }}">Chat</button></form>
+    {% if voice_enabled %}<form method="post" action="/session/new?mode=voice"><button class="{{ 'on' if mode == 'voice' }}">Voice</button></form>{% endif %}
+  </div>
+  <span class="muted">{{ user.display_name }}</span>
+  <a href="/admin">Demo controls</a>
   <a href="{{ replay_url }}" target="_blank">Replay</a>
-  <form method="post" action="/session/new" class="inline"><button class="link">New session</button></form>
+  <a href="/logout">Sign out</a>
 {% endblock %}
 {% block body %}
-<div class="layout" hx-ext="sse" sse-connect="/ui/stream">
+<div class="layout">
   <section class="conversation">
     <div id="messages" class="messages">
-      {% if not pairs %}
-      <div class="bubble agent"><p>Hi! I can book, move or cancel your clinic appointment — in English or Hindi.</p></div>
-      {% endif %}
-      {% for pair in pairs %}{% include "_message.html" %}{% endfor %}
+      <div class="bubble agent"><p>Hi {{ user.display_name.split()[0] }}! I can book, move or cancel your clinic appointment{% if mode == 'voice' %} — start the call and just talk{% endif %}.</p></div>
+      {% for pair in pairs %}
+      <div class="bubble customer"><p>{{ pair.text }}</p></div>
+      {% if pair.reply %}{% with reply = pair.reply %}{% include "_agent.html" %}{% endwith %}{% endif %}
+      {% endfor %}
     </div>
-    <form class="composer" hx-post="/ui/send" hx-target="#messages" hx-swap="beforeend"
-          hx-on::before-request="this.querySelector('[name=client_msg_id]').value = crypto.randomUUID()"
-          hx-on::after-request="if (event.detail.successful) { this.reset(); document.getElementById('messages').lastElementChild?.scrollIntoView({behavior: 'smooth'}) }">
-      <input type="hidden" name="client_msg_id">
-      <input name="text" placeholder="e.g. Book me Thursday 3pm with Dr A" autocomplete="off" required autofocus>
+    {% if mode == 'chat' %}
+    <form id="composer" class="composer" autocomplete="off">
+      <input name="text" placeholder="Type a message… e.g. Book me Thursday 3pm with Dr A" required autofocus>
       <button class="primary">Send</button>
-      <span class="htmx-indicator muted">checking with the clinic…</span>
     </form>
+    {% else %}
+    <div class="composer voice">
+      <button id="call" class="primary">Start call</button>
+      <span id="call-status" class="muted">Uses your microphone</span>
+    </div>
+    {% endif %}
   </section>
-  <aside id="panels" hx-get="/ui/panels" hx-trigger="panels from:body, sse:panels" hx-swap="innerHTML">
-    {% include "_panels.html" %}
-  </aside>
+  <aside id="panels">{% include "_panels.html" %}</aside>
 </div>
 {% endblock %}
+{% block scripts %}{% if mode == 'voice' %}<script src="/static/livekit-client.umd.js" defer></script>{% endif %}{% endblock %}

@@ -26,6 +26,8 @@ class TurnResult(BaseModel):
     message_id: str
     prose: str = ""
     system_text: str = ""
+    chips: list[dict] = []
+    tools: list[str] = []
 
 
 def apply_new_claims(state: TurnState) -> bool:
@@ -91,6 +93,8 @@ async def finish(state: TurnState) -> TurnResult:
         message_id=state.message_id,
         prose=state.prose.strip(),
         system_text=compose.system_text(state),
+        chips=compose.chips(state),
+        tools=list(dict.fromkeys(state.tools)),
     )
     messages.add_message(state.conn, state.session_id, "agent", reply, state.lang, state.ctx.clock.now())
     messages.store_result(state.conn, state.message_id, result.model_dump())
