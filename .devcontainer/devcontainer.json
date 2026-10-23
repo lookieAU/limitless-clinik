@@ -1,0 +1,25 @@
+{
+  "name": "Clinik by Limitless",
+  "image": "mcr.microsoft.com/devcontainers/base:ubuntu-24.04",
+  "features": {
+    "ghcr.io/devcontainers/features/docker-in-docker:2": {}
+  },
+  "hostRequirements": {
+    "cpus": 4,
+    "memory": "16gb"
+  },
+  "forwardPorts": [8000, 8002],
+  "portsAttributes": {
+    "8000": {"label": "Clinik", "onAutoForward": "openBrowser"},
+    "8002": {"label": "Replay", "onAutoForward": "silent"},
+    "8001": {"label": "Clinic mock (internal)", "onAutoForward": "ignore"}
+  },
+  "secrets": {
+    "OPENROUTER_API_KEY": {"description": "OpenRouter key for the LLM"},
+    "LIVEKIT_URL": {"description": "LiveKit Cloud URL (wss://...)"},
+    "LIVEKIT_API_KEY": {"description": "LiveKit API key"},
+    "LIVEKIT_API_SECRET": {"description": "LiveKit API secret"}
+  },
+  "postCreateCommand": "bash .devcontainer/setup.sh",
+  "postStartCommand": "docker compose up -d --build"
+}

@@ -18,6 +18,8 @@ replay (:8002).
 - **Demo controls** (top bar): clinic cancels a booking (with or without losing the webhook), make the next booking
   time out, jump a day, run the nightly summary (or a broken one that drops "not"), enable the second clinic, reset.
 - **Replay**: <http://localhost:8002/replay> steps through "the appointment that changed four times".
+- **No local machine?** Open the repo in GitHub Codespaces (4-core). It installs Docker, writes `.env` from the
+  Codespaces secrets `OPENROUTER_API_KEY` and `LIVEKIT_*`, runs `docker compose up`, and opens the Clinik port over https.
 - Tests: `uv run pytest` (scripted model, fixed clock) · `uv run pytest -m live` (real model).
 - Model: Claude Haiku 5.5 via OpenRouter by default (`OPENROUTER_MODEL`), or the Anthropic API (`LLM_PROVIDER=anthropic`).
 
