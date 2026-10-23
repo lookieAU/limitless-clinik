@@ -35,6 +35,7 @@ async def test_booking_is_read_back_with_ref_and_goodbye_rechecks(make_harness):
     bridge = await bridge_for(harness)
     booked = await bridge.respond("Book me Thursday 3pm with Dr A.", confidence=0.95)
     assert "CA-1003" in booked.text and "Thu 5 Nov" in booked.text and booked.filler
+    assert "(" not in booked.text
     goodbye = await bridge.respond("Thanks, bye", confidence=0.95)
     assert "CA-1003" in goodbye.text and "Thu 5 Nov" in goodbye.text
     assert harness.events("status_recheck")
@@ -54,8 +55,19 @@ async def test_spoken_turn_says_filler_then_the_agent_reply(make_harness):
     harness = await make_harness(BOOK_THU)
     bridge = await bridge_for(harness)
     spoken = []
-    await handle_turn(bridge, lambda text, **kwargs: spoken.append(text), "Book me Thursday 3pm with Dr A.", 0.95)
-    assert spoken[0] == "One moment." and "CA-1003" in spoken[1]
+    await handle_turn(bridge, lambda text, **kwargs: spoken.append(text), "Book me Thursday 3pm with Dr A.", 0.95, filler_after=0.0)
+    assert spoken[0] == "Let me check." and "CA-1003" in spoken[1]
+    assert "(" not in spoken[1] and "checked just now" not in spoken[1]
+
+
+async def test_fast_reply_skips_the_filler(make_harness):
+    from agent.voice.bridge import handle_turn
+
+    harness = await make_harness(BOOK_THU)
+    bridge = await bridge_for(harness)
+    spoken = []
+    await handle_turn(bridge, lambda text, **kwargs: spoken.append(text), "Book me Thursday 3pm with Dr A.", 0.95, filler_after=30.0)
+    assert len(spoken) == 1 and "CA-1003" in spoken[0]
 
 
 async def test_low_confidence_negation_is_asked_back_without_filler(make_harness):

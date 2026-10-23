@@ -39,4 +39,4 @@ class OffsetClock:
 
 def clock_from_env() -> Clock:
     demo_now = os.environ.get("DEMO_NOW", "").strip()
-    return OffsetClock(parse_utc(demo_now)) if demo_now else SystemClock()
+    return OffsetClock(parse_utc(demo_now) if demo_now else SystemClock().now())

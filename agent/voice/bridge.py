@@ -1,3 +1,6 @@
+import asyncio
+import itertools
+import re
 from collections.abc import Callable
 from dataclasses import dataclass
 
@@ -9,7 +12,12 @@ from agent.pipeline.language import detect_language
 CONFIDENCE_FLOOR = 0.85
 YES = frozenset("yes yeah yep yup right correct sure haan haa ha ji sahi bilkul हाँ हां जी सही".split())
 GOODBYE = frozenset("bye goodbye thanks thank dhanyavaad dhanyawad shukriya अलविदा धन्यवाद शुक्रिया".split())
-FILLER = {"en": "One moment.", "hi": "एक पल।"}
+FILLERS = {
+    "en": ("Let me check.", "Sure, give me a second.", "Okay, checking that now.", "Just a moment."),
+    "hi": ("एक सेकंड, देखता हूँ।", "ठीक है, देख रहा हूँ।", "बस एक पल।"),
+}
+FILLER_AFTER_S = 2.0
+PARENTHESES = re.compile(r"\s*\([^)]*\)")
 SORRY = {"en": "Sorry, I couldn't get that done just now. Please try again.", "hi": "माफ़ कीजिए, अभी यह नहीं हो पाया। कृपया दोबारा कोशिश करें।"}
 CONFIRM = {"en": "Just to be sure, you said: “{text}”. Is that right?", "hi": "पक्का कर लूँ, आपने कहा: “{text}”. सही है?"}
 
@@ -35,7 +43,8 @@ def is_goodbye(text: str) -> bool:
 
 
 def speakable(reply: str) -> str:
-    return " ".join(part.strip() for part in reply.split("\n\n") if part.strip())
+    text = " ".join(part.strip() for part in reply.split("\n\n") if part.strip())
+    return PARENTHESES.sub("", text).replace(" — ", ", ")
 
 
 class VoiceBridge:
@@ -43,6 +52,7 @@ class VoiceBridge:
         self.client = client
         self.user_id = user_id
         self.pending: str | None = None
+        self.fillers = {lang: itertools.cycle(phrases) for lang, phrases in FILLERS.items()}
 
     async def login(self, fallback_user: str | None = None) -> None:
         response = await self.client.post("/api/login/code", json={"user_id": self.user_id})
@@ -61,7 +71,7 @@ class VoiceBridge:
         lang = detect_language(text)
         response = await self.client.post("/api/chat", json={"text": text, "recap": recap})
         response.raise_for_status()
-        return VoiceReply(speakable(response.json()["reply"]), FILLER[lang])
+        return VoiceReply(speakable(response.json()["reply"]), next(self.fillers[lang]))
 
     def will_send(self, text: str, confidence: float | None) -> bool:
         if self.pending and is_yes(text):
@@ -79,14 +89,18 @@ class VoiceBridge:
         return await self.send(text, recap=is_goodbye(text))
 
 
-async def handle_turn(bridge: VoiceBridge, say: Callable, text: str, confidence: float | None) -> None:
+async def handle_turn(bridge: VoiceBridge, say: Callable, text: str, confidence: float | None, filler_after: float = FILLER_AFTER_S) -> None:
     if not text.strip():
         return
     lang = detect_language(text)
+    task = asyncio.ensure_future(bridge.respond(text, confidence))
     if bridge.will_send(text, confidence):
-        say(FILLER[lang], add_to_chat_ctx=False)
+        try:
+            await asyncio.wait_for(asyncio.shield(task), filler_after)
+        except TimeoutError:
+            say(next(bridge.fillers[lang]), add_to_chat_ctx=False)
     try:
-        reply = await bridge.respond(text, confidence)
+        reply = await task
     except httpx.HTTPError:
         say(SORRY[lang])
         return

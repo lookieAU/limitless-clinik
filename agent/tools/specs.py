@@ -4,6 +4,11 @@ REF = {"type": "string", "description": "clinic booking reference such as CA-100
 
 TOOL_SPECS = [
     {
+        "name": "current_time",
+        "description": "Get today's date, weekday and the current time in the clinic's and the customer's timezones.",
+        "input_schema": {"type": "object", "properties": {"clinic_id": {"type": "string"}}},
+    },
+    {
         "name": "check_availability",
         "description": "List free slots at a clinic. Always call this before offering or booking a slot.",
         "input_schema": {

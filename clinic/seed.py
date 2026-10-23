@@ -16,11 +16,16 @@ TABLES = ("events", "idempotency_keys", "bookings", "slots", "doctors", "custome
 SLOT_MINUTES = 30
 DAY_START = time(9, 0)
 DAY_END = time(17, 0)
-WEEKS = 2
+WEEKS = 3
 
 
 def slot_id(doctor_id: str, day: date, start: time) -> str:
     return f"{doctor_id}_{day:%Y%m%d}_{start:%H%M}"
+
+
+def next_weekday(clinic: ClinicConfig, now: datetime, weekday: int) -> date:
+    today = to_local(now, clinic.zone).date()
+    return today + timedelta(days=(weekday - today.weekday()) % 7 or 7)
 
 
 def first_monday(clinic: ClinicConfig, now: datetime) -> date:
@@ -66,8 +71,7 @@ def insert_reference_data(conn: sqlite3.Connection, now: datetime) -> None:
 
 def insert_fixtures(conn: sqlite3.Connection, now: datetime) -> dict:
     clinic = CLINICS["clinic_a"]
-    monday = first_monday(clinic, now)
-    friday, wednesday = monday + timedelta(days=4), monday + timedelta(days=2)
+    friday, wednesday = next_weekday(clinic, now, 4), next_weekday(clinic, now, 2)
     with transaction(conn):
         full = create_booking(conn, clinic, "c_walkin", slot_id("dr_a", friday, time(11, 0)), now)
         edited = create_booking(conn, clinic, "c_walkin", slot_id("dr_b", wednesday, time(10, 0)), now)

@@ -4,6 +4,7 @@ from agent.pipeline.state import TurnState
 from agent.tools import reads, writes
 
 HANDLERS = {
+    "current_time": reads.current_time,
     "check_availability": reads.check_availability,
     "propose_slot": reads.propose_slot,
     "get_booking": reads.get_booking,

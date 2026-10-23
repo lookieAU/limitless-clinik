@@ -1,4 +1,5 @@
 from datetime import date, time, timedelta
+from zoneinfo import ZoneInfo
 
 from agent.clinic.observe import observe
 from agent.memory.recall import recall
@@ -9,7 +10,7 @@ from agent.pipeline.policy_gate import CLINIC_ERRORS, Refusal, authorize, check_
 from agent.pipeline.state import TurnState
 from agent.pipeline.templates import text
 from agent.repo import offers, verified
-from shared.time import local_to_utc, to_iso_z, to_local
+from shared.time import format_clock, local_to_utc, to_iso_z, to_local, tz_label
 
 MAX_SLOTS = 12
 
@@ -143,3 +144,17 @@ def option_list(state: TurnState, slots) -> str:
         for index, slot in enumerate(slots, start=1)
     ]
     return text(state.lang, "list_joiner").join(rendered)
+
+
+async def current_time(state: TurnState, args: dict) -> dict:
+    adapter = pick_adapter(state, args.get("clinic_id"))
+    now = state.ctx.clock.now()
+    clinic_local, customer_local = to_local(now, adapter.tz), to_local(now, ZoneInfo(state.user["tz"]))
+    return {
+        "ok": True,
+        "today": clinic_local.date().isoformat(),
+        "weekday": f"{clinic_local:%A}",
+        "clinic_time": f"{clinic_local:%a %d %b %Y}, {format_clock(clinic_local)} {tz_label(adapter.tz)}",
+        "customer_time": f"{customer_local:%a %d %b %Y}, {format_clock(customer_local)} {tz_label(ZoneInfo(state.user['tz']))}",
+    }
+
