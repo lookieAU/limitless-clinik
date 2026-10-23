@@ -84,6 +84,7 @@ async def finish(state: TurnState) -> TurnResult:
         state.add("info", "help.default")
     reply = compose.render(state)
     session = sessions.get_session(state.conn, state.session_id)
+    doctors = {name: label for names in state.ctx.doctor_cache.values() for name, label in names.items()}
     result = TurnResult(
         reply=reply,
         lang=state.lang,
@@ -94,7 +95,7 @@ async def finish(state: TurnState) -> TurnResult:
         message_id=state.message_id,
         prose=state.prose.strip(),
         system_text=compose.system_text(state),
-        chips=compose.chips(state),
+        chips=compose.chips(state, doctors),
         tools=list(dict.fromkeys(state.tools)),
     )
     messages.add_message(state.conn, state.session_id, "agent", reply, state.lang, state.ctx.clock.now())

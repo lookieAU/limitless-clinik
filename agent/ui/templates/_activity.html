@@ -1,1 +1,1 @@
-{% for item in activity %}<li class="{{ item.type }}"><small class="muted">{{ item.time }}</small> {{ item.text }}</li>{% else %}<li class="muted">Nothing yet.</li>{% endfor %}
+{% for item in activity %}<li class="list-item {{ 'warn' if item.type in ('gate_refused', 'reply_blocked', 'injection_flag', 'authz_denied', 'summary_rejected') else '' }}"><span class="caption time">{{ item.time }}</span><span class="body2">{{ item.text }}</span></li>{% else %}<li class="list-item"><span class="body2 secondary">Nothing yet</span></li>{% endfor %}

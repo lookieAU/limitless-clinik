@@ -1,15 +1,26 @@
-<section class="panel">
-  <h2>Appointments <small>checked with the clinic</small></h2>
-  {% for row in appointments %}
-  <div class="appt">
-    <span class="pill {{ row.status }}">{{ row.status }}</span>
-    <div><strong>{{ row.doctor }}</strong><br>{{ row.when }}<br><small class="muted">{{ row.ref }} · checked {{ row.checked }}</small></div>
-  </div>
-  {% else %}<p class="muted">No appointments yet.</p>{% endfor %}
+{% from "_icons.html" import icon %}
+<section class="paper card">
+  <div class="card-header"><div class="h6">Appointments</div><div class="caption">Verified with the clinic</div></div>
+  {% if appointments %}
+  <ul class="list">
+    {% for row in appointments %}
+    <li class="list-item">
+      <span class="list-icon {{ row.status }}">{{ icon("event") }}</span>
+      <span class="list-text"><span class="primary">{{ row.doctor }}</span><span class="secondary">{{ row.when }}</span><span class="caption">{{ row.ref }} · checked {{ row.checked }}</span></span>
+      <span class="chip filled {{ 'success' if row.status == 'confirmed' else 'error' }}">{{ row.status | capitalize }}</span>
+    </li>
+    {% endfor %}
+  </ul>
+  {% else %}<p class="empty">{{ icon("event", 32) }}<span>No appointments yet</span></p>{% endif %}
 </section>
-<section class="panel">
-  <h2>What you've told us <small>not yet checked facts</small></h2>
-  {% for item in told_us %}
-  <div class="said"><span class="pill {{ 'no' if item.negative else 'yes' }}">{{ "not" if item.negative else "wants" }}</span> {{ item.label }} <small class="muted">“{{ item.raw }}”</small></div>
-  {% else %}<p class="muted">Nothing yet.</p>{% endfor %}
+<section class="paper card">
+  <div class="card-header"><div class="h6">Your preferences</div><div class="caption">From your messages · not verified</div></div>
+  {% if told_us %}
+  <div class="chip-set padded">
+    {% for item in told_us %}
+    {% if item.negative %}<span class="chip error" title="You said “{{ item.raw }}”">{{ icon("block", 16) }}Not {{ item.label }}</span>
+    {% else %}<span class="chip secondary" title="You said “{{ item.raw }}”">{{ icon("check", 16) }}{{ item.label }}</span>{% endif %}
+    {% endfor %}
+  </div>
+  {% else %}<p class="empty">{{ icon("chat", 32) }}<span>Nothing yet</span></p>{% endif %}
 </section>

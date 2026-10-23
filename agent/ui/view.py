@@ -48,8 +48,9 @@ def appointments(ctx, user: dict) -> list[dict]:
 
 def told_us(ctx, user: dict) -> list[dict]:
     rows = claims.live_for_user(ctx.conn, user["id"])
+    doctors = {name: label for names in ctx.doctor_cache.values() for name, label in names.items()}
     return [
-        {"label": value_label(row["subject"], row["value"], "en"), "negative": row["polarity"] == "negative", "raw": row["raw_text"]}
+        {"label": value_label(row["subject"], row["value"], "en", doctors), "negative": row["polarity"] == "negative", "raw": row["raw_text"]}
         for row in reversed(rows)
         if row["subject"] != "booking_ref"
     ]

@@ -1,14 +1,19 @@
+{% from "_icons.html" import icon %}
 {% extends "base.html" %}
 {% block body %}
-<section class="card narrow">
-  <h1>Who's booking?</h1>
-  <form method="post" action="/login/start" class="stack">
-    {% for user in users %}
-    <button class="choice" name="user_id" value="{{ user.id }}">
-      <strong>{{ user.display_name }}</strong>
-      <span class="muted">{{ "Hindi" if user.preferred_lang == "hi" else "English" }} · {{ user.tz }}</span>
-    </button>
-    {% endfor %}
+<section class="paper auth">
+  <h1 class="h5">Sign in</h1>
+  <p class="body2 secondary">Choose a demo patient. You'll get a one-time code next.</p>
+  <form method="post" action="/login/start">
+    <ul class="list">
+      {% for user in users %}
+      <li><button class="list-button" name="user_id" value="{{ user.id }}">
+        <span class="avatar">{{ user.display_name[:1] }}</span>
+        <span class="list-text"><span class="primary">{{ user.display_name }}</span><span class="secondary">{{ "Hindi" if user.preferred_lang == "hi" else "English" }} · {{ user.tz }}</span></span>
+        {{ icon("chevron") }}
+      </button></li>
+      {% endfor %}
+    </ul>
   </form>
 </section>
 {% endblock %}

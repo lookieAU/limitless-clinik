@@ -1,16 +1,25 @@
 {% extends "base.html" %}
+{% from "_icons.html" import icon %}
 {% block title %}Replay · Clinik by Limitless{% endblock %}
-{% block nav %}<span class="muted">{{ timeline.title }}</span>{% endblock %}
+{% block appbar %}<span class="body2">Scripted replay</span>{% endblock %}
 {% block body %}
-<div class="layout">
-  <section class="conversation">
-    <div id="steps" class="messages"><p class="muted">A scripted run of the whole story, with its own clinic and database. Press start.</p></div>
-    <div class="composer voice"><button id="next" class="primary">Start replay</button></div>
+<div class="grid">
+  <section class="paper chat">
+    <div class="chat-header">
+      <span class="avatar">{{ icon("replay") }}</span>
+      <div><div class="subtitle1">{{ timeline.title }}</div><div class="caption">Scripted model · its own clinic and database · {{ timeline.steps | length }} steps</div></div>
+    </div>
+    <div id="steps" class="messages"><p class="empty">{{ icon("play", 32) }}<span>Press start to step through the story</span></p></div>
+    <div class="composer voice">
+      <button id="next" class="btn contained">{{ icon("play", 18) }}<span>Start replay</span></button>
+      <span id="progress" class="caption"></span>
+    </div>
   </section>
-  <aside id="replay-panels"><p class="muted">What the agent knows appears here after each step.</p></aside>
+  <aside id="replay-panels" class="side"><section class="paper card"><p class="empty"><span>What the agent knows appears here after each step</span></p></section></aside>
 </div>
 <script>
   const next = document.getElementById("next");
+  const label = next.querySelector("span");
   const steps = document.getElementById("steps");
   let running = false;
   next.addEventListener("click", async () => {
@@ -23,9 +32,10 @@
     const data = await (await fetch("/replay/next", { method: "POST" })).json();
     steps.insertAdjacentHTML("beforeend", data.step);
     document.getElementById("replay-panels").innerHTML = data.panels;
-    steps.scrollTop = steps.scrollHeight;
+    steps.lastElementChild.scrollIntoView({ behavior: "smooth", block: "start" });
     running = !data.done;
-    next.textContent = data.done ? "Run again" : `Step ${data.position + 1} of ${data.total} →`;
+    label.textContent = data.done ? "Run again" : `Next step`;
+    document.getElementById("progress").textContent = data.done ? "Finished" : `Step ${data.position} of ${data.total} done`;
     next.disabled = false;
   });
 </script>

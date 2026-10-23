@@ -1,37 +1,42 @@
 {% extends "base.html" %}
-{% block nav %}
-  <div class="modes">
-    <form method="post" action="/session/new?mode=chat"><button class="{{ 'on' if mode == 'chat' }}">Chat</button></form>
-    {% if voice_enabled %}<form method="post" action="/session/new?mode=voice"><button class="{{ 'on' if mode == 'voice' }}">Voice</button></form>{% endif %}
+{% from "_icons.html" import icon %}
+{% block appbar %}
+  <div class="toggle-group" role="group" aria-label="Mode">
+    <form method="post" action="/session/new?mode=chat"><button class="toggle {{ 'selected' if mode == 'chat' }}">{{ icon("chat", 18) }}Chat</button></form>
+    {% if voice_enabled %}<form method="post" action="/session/new?mode=voice"><button class="toggle {{ 'selected' if mode == 'voice' }}">{{ icon("mic", 18) }}Voice</button></form>{% endif %}
   </div>
-  <span class="muted">{{ user.display_name }}</span>
-  <a href="/admin">Demo controls</a>
-  <a href="{{ replay_url }}" target="_blank">Replay</a>
-  <a href="/logout">Sign out</a>
+  <a class="btn text on-primary" href="/admin">{{ icon("tune", 18) }}Demo controls</a>
+  <a class="btn text on-primary" href="{{ replay_url }}" target="_blank">{{ icon("replay", 18) }}Replay</a>
+  <span class="avatar small light" title="{{ user.display_name }}">{{ user.display_name[:1] }}</span>
+  <a class="icon-button on-primary" href="/logout" title="Sign out">{{ icon("logout") }}</a>
 {% endblock %}
 {% block body %}
-<div class="layout">
-  <section class="conversation">
+<div class="grid">
+  <section class="paper chat">
+    <div class="chat-header">
+      <span class="avatar">C</span>
+      <div><div class="subtitle1">Clinik assistant</div><div class="caption">{{ "Voice call" if mode == "voice" else "Chat" }} · English and हिन्दी</div></div>
+    </div>
     <div id="messages" class="messages">
-      <div class="bubble agent"><p>Hi {{ user.display_name.split()[0] }}! I can book, move or cancel your clinic appointment{% if mode == 'voice' %} — start the call and just talk{% endif %}.</p></div>
+      <div class="msg agent"><span class="avatar small">C</span><div class="msg-body"><div class="bubble"><p>Hi {{ user.display_name.split()[0] }}, I can book, move or cancel your clinic appointment.{% if mode == "voice" %} Start the call and just talk.{% endif %}</p></div></div></div>
       {% for pair in pairs %}
-      <div class="bubble customer"><p>{{ pair.text }}</p></div>
+      <div class="msg user"><div class="bubble"><p>{{ pair.text }}</p></div></div>
       {% if pair.reply %}{% with reply = pair.reply %}{% include "_agent.html" %}{% endwith %}{% endif %}
       {% endfor %}
     </div>
-    {% if mode == 'chat' %}
+    {% if mode == "chat" %}
     <form id="composer" class="composer" autocomplete="off">
-      <input name="text" placeholder="Type a message… e.g. Book me Thursday 3pm with Dr A" required autofocus>
-      <button class="primary">Send</button>
+      <input name="text" class="input" placeholder="Message Clinik" aria-label="Message" required autofocus>
+      <button class="fab small" aria-label="Send">{{ icon("send") }}</button>
     </form>
     {% else %}
     <div class="composer voice">
-      <button id="call" class="primary">Start call</button>
-      <span id="call-status" class="muted">Uses your microphone</span>
+      <button id="call" class="fab large" aria-label="Start call" data-mic="{{ icon('mic', 28) | forceescape }}" data-end="{{ icon('call_end', 28) | forceescape }}">{{ icon("mic", 28) }}</button>
+      <div><div id="call-title" class="subtitle1">Start a voice call</div><div id="call-status" class="caption">Your microphone is used only while the call is on</div></div>
     </div>
     {% endif %}
   </section>
-  <aside id="panels">{% include "_panels.html" %}</aside>
+  <aside id="panels" class="side">{% include "_panels.html" %}</aside>
 </div>
 {% endblock %}
-{% block scripts %}{% if mode == 'voice' %}<script src="/static/livekit-client.umd.js" defer></script>{% endif %}{% endblock %}
+{% block scripts %}{% if mode == "voice" %}<script src="/static/livekit-client.umd.js" defer></script>{% endif %}{% endblock %}

@@ -1,13 +1,14 @@
+{% from "_icons.html" import icon %}
 {% extends "base.html" %}
 {% block body %}
-<section class="card narrow">
-  <h1>Enter your code</h1>
-  {% if code %}<p class="muted">Demo code for {{ user.display_name }}: <strong class="otp">{{ code }}</strong></p>{% endif %}
-  {% if error %}<p class="error">{{ error }}</p>{% endif %}
+<section class="paper auth">
+  <h1 class="h5">Enter your code</h1>
+  {% if code %}<div class="alert info">{{ icon("info") }}<span>Demo code for {{ user.display_name }}: <strong class="otp">{{ code }}</strong></span></div>{% endif %}
+  {% if error %}<div class="alert error">{{ icon("block") }}<span>{{ error }}</span></div>{% endif %}
   <form method="post" action="/login/verify" class="stack">
     <input type="hidden" name="user_id" value="{{ user.id }}">
-    <input name="code" inputmode="numeric" autocomplete="one-time-code" value="{{ code or '' }}" required>
-    <button class="primary">Continue</button>
+    <label class="field"><span class="field-label">One-time code</span><input name="code" inputmode="numeric" autocomplete="one-time-code" value="{{ code or '' }}" required></label>
+    <button class="btn contained block">Continue</button>
   </form>
 </section>
 {% endblock %}

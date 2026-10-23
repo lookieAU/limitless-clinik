@@ -1,52 +1,56 @@
 {% extends "base.html" %}
-{% block nav %}<span class="muted">{{ user.display_name }}</span><a href="/chat">Back to chat</a>{% endblock %}
+{% from "_icons.html" import icon %}
+{% block appbar %}<a class="btn text on-primary" href="/chat">{{ icon("back", 18) }}Back to chat</a><span class="avatar small light" title="{{ user.display_name }}">{{ user.display_name[:1] }}</span>{% endblock %}
 {% block body %}
+<div class="page-title"><h1 class="h5">Demo controls</h1><p class="body2 secondary">Make the clinic, the network and the clock misbehave, then go back to the chat.</p></div>
 <div class="admin">
-  <section class="panel">
-    <h2>Clinic side</h2>
+  <section class="paper card">
+    <div class="card-header"><div class="h6">Clinic cancels a booking</div><div class="caption">The clinic sends a signed webhook, or the webhook gets lost</div></div>
     {% for row in appointments if row.status == "confirmed" %}
-    <form data-async method="post" action="/admin/act/cancel-slot" class="row">
+    <form data-async method="post" action="/admin/act/cancel-slot" class="card-row">
       <input type="hidden" name="ref" value="{{ row.ref }}">
-      <span>{{ row.ref }} · {{ row.when }}</span>
-      <button class="primary" name="deliver" value="true">Clinic cancels it</button>
-      <button name="deliver" value="false">…and the webhook gets lost</button>
+      <span class="list-text"><span class="primary">{{ row.ref }} · {{ row.doctor }}</span><span class="secondary">{{ row.when }}</span></span>
+      <span class="actions"><button class="btn contained" name="deliver" value="true">Cancel</button><button class="btn outlined" name="deliver" value="false">Cancel, lose webhook</button></span>
     </form>
-    {% else %}<p class="muted">Book something in the chat first.</p>{% endfor %}
+    {% else %}<p class="empty"><span>Book something in the chat first</span></p>{% endfor %}
   </section>
-  <section class="panel">
-    <h2>Break things</h2>
-    <form data-async method="post" action="/admin/act/fault" class="row">
-      <span>Next booking request:</span>
-      <button name="mode" value="timeout_before_commit">times out before saving</button>
-      <button name="mode" value="timeout_after_commit">times out after saving</button>
-      <button name="mode" value="none">normal</button>
-    </form>
-    <form data-async method="post" action="/admin/act/clock" class="row">
-      <span>Time travel:</span><button name="hours" value="24">+1 day</button>
+  <section class="paper card">
+    <div class="card-header"><div class="h6">Network faults</div><div class="caption">Applies to the next booking request only</div></div>
+    <form data-async method="post" action="/admin/act/fault" class="card-actions">
+      <button class="btn outlined" name="mode" value="timeout_before_commit">Time out before saving</button>
+      <button class="btn outlined" name="mode" value="timeout_after_commit">Time out after saving</button>
+      <button class="btn text" name="mode" value="none">Clear</button>
     </form>
   </section>
-  <section class="panel">
-    <h2>Memory</h2>
-    <form data-async method="post" action="/admin/act/summary" class="row">
-      <button class="primary" name="lossy" value="no">Run nightly summary</button>
-      <button name="lossy" value="yes">Run with a summarizer that drops "not"</button>
+  <section class="paper card">
+    <div class="card-header"><div class="h6">Time</div><div class="caption">Moves the agent and clinic clocks together</div></div>
+    <form data-async method="post" action="/admin/act/clock" class="card-actions"><button class="btn outlined" name="hours" value="24">Jump one day ahead</button></form>
+  </section>
+  <section class="paper card">
+    <div class="card-header"><div class="h6">Nightly memory</div><div class="caption">Summarises today's preferences; negations must survive</div></div>
+    <form data-async method="post" action="/admin/act/summary" class="card-actions">
+      <button class="btn contained" name="lossy" value="no">Run summary</button>
+      <button class="btn outlined" name="lossy" value="yes">Run with a lossy summariser</button>
     </form>
   </section>
-  <section class="panel">
-    <h2>Second clinic</h2>
-    <form data-async method="post" action="/admin/act/clinic" class="row">
-      <span>Marina Health Centre (24 h cancel rule, polling, "voided"):</span>
-      <button name="enabled" value="yes">Enable</button><button name="enabled" value="no">Disable</button>
+  <section class="paper card">
+    <div class="card-header"><div class="h6">Second clinic</div><div class="caption">Marina Health Centre: 24 h cancel rule, polling, “voided” status</div></div>
+    <form data-async method="post" action="/admin/act/clinic" class="card-actions">
+      <button class="btn contained" name="enabled" value="yes">Enable</button>
+      <button class="btn text" name="enabled" value="no">Disable</button>
     </form>
   </section>
-  <section class="panel">
-    <h2>Result</h2>
-    <p id="result" class="muted">Click something above.</p>
-    <form data-async data-confirm="Wipe all bookings and conversations?" method="post" action="/admin/act/reset" class="row"><button>Reset demo data</button></form>
+  <section class="paper card">
+    <div class="card-header"><div class="h6">Reset</div><div class="caption">Clears bookings, conversations and memory</div></div>
+    <form data-async data-confirm="Wipe all bookings and conversations?" method="post" action="/admin/act/reset" class="card-actions"><button class="btn outlined danger">Reset demo data</button></form>
   </section>
-  <section class="panel">
-    <h2>What the agent did</h2>
-    <ul id="activity" class="activity">{% include "_activity.html" %}</ul>
+  <section class="paper card wide">
+    <div class="card-header"><div class="h6">Result</div></div>
+    <div id="result" class="alert info">{{ icon("info") }}<span>Results appear here.</span></div>
+  </section>
+  <section class="paper card wide">
+    <div class="card-header"><div class="h6">What the agent did</div><div class="caption">Newest first</div></div>
+    <ul id="activity" class="list dense">{% include "_activity.html" %}</ul>
   </section>
 </div>
 {% endblock %}

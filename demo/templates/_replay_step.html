@@ -1,8 +1,9 @@
-<div class="replay-step">
-  <p class="narration"><strong>Step {{ step.index }}.</strong> {{ step.narrate }}</p>
-  {% for note in step.notes %}<p class="muted"><small>• {{ note }}</small></p>{% endfor %}
+{% from "_icons.html" import icon %}
+<div class="step">
+  <div class="narration">{{ icon("info") }}<span><strong>Step {{ step.index }}.</strong> {{ step.narrate }}</span></div>
+  {% for note in step.notes %}<div class="notes">{{ note }}</div>{% endfor %}
   {% if step.said %}
-  <div class="bubble customer"><p>{{ step.said }}</p></div>
+  <div class="msg user"><div class="bubble"><p>{{ step.said }}</p></div></div>
   {% include "_agent.html" %}
   {% endif %}
 </div>

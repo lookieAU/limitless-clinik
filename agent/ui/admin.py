@@ -110,4 +110,4 @@ async def reset(request: Request) -> Response:
         ctx.conn.execute(f"DELETE FROM {table}")
     ctx.registry.enabled_ids = list(ctx.settings.enabled_clinics)
     ctx.doctor_cache.clear()
-    return HTMLResponse('Everything was reset. <a href="/login">Sign in again</a>.')
+    return HTMLResponse('Everything was reset. <a href="/logout">Sign in again</a>.')

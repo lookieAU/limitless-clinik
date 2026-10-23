@@ -20,16 +20,16 @@ async def test_chat_reply_shows_chips_not_internals(make_harness):
     harness = await make_harness({**BOOK_THU, **NOT_FRIDAY})
     client = await browser(harness)
     page = (await client.get("/chat")).text
-    assert "Hi Asha!" in page and 'id="composer"' in page
+    assert "Hi Asha," in page and 'id="composer"' in page
     sent = (await client.post("/ui/send", data={"text": "Book me Thursday 3pm with Dr A.", "client_msg_id": "ui-1"})).text
     assert "confirmed by the clinic" in sent
-    assert "✓ Clinic: CA-1003 · confirmed" in sent and "You said: Thursday" in sent
-    assert "check_availability · book" in sent
+    assert "CA-1003 · confirmed" in sent and 'chip success' in sent and 'chip secondary' in sent
+    assert "Thursday" in sent and "<code>check_availability, book</code>" in sent
     assert "Provenance" not in sent and "Events:" not in sent
     panels = (await client.get("/ui/panels")).text
     assert "CA-1003" in panels and "Dr Arjun Mehta" in panels
     history = (await client.get("/chat")).text
-    assert "✓ Clinic: CA-1003 · confirmed" in history
+    assert "CA-1003 · confirmed" in history
     await client.aclose()
 
 
@@ -40,7 +40,7 @@ async def test_switching_mode_starts_a_fresh_conversation(make_harness):
     switched = await client.post("/session/new?mode=chat")
     assert switched.headers["location"] == "/chat?mode=chat"
     page = (await client.get("/chat")).text
-    assert "bubble customer" not in page and "CA-1003" in page
+    assert 'class="msg user"' not in page and "CA-1003" in page
     assert (await client.get("/ui/voice/token")).status_code == 404
     await client.aclose()
 
@@ -50,7 +50,7 @@ async def test_demo_controls_speak_plainly(make_harness):
     client = await browser(harness)
     await client.post("/ui/send", data={"text": "Book me Thursday 3pm with Dr A."})
     await client.post("/ui/send", data={"text": "Please, not Friday."})
-    assert "Clinic cancels it" in (await client.get("/admin")).text
+    assert "Cancel, lose webhook" in (await client.get("/admin")).text
     rejected = (await client.post("/admin/act/summary", data={"lossy": "yes"})).text
     assert rejected.startswith("Rejected:") and "previous memory is kept" in rejected
     cancelled = (await client.post("/admin/act/cancel-slot", data={"ref": "CA-1003", "deliver": "true"})).text

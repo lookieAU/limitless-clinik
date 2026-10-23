@@ -1,9 +1,16 @@
-<div class="bubble agent">
-  {% for paragraph in reply.paragraphs %}<p>{{ paragraph }}</p>{% endfor %}
-  {% if reply.chips or reply.tools %}
-  <div class="chips">
-    {% for chip in reply.chips %}<span class="chip {{ chip.kind }}">{{ "✓ Clinic" if chip.kind == "clinic" else "You said" }}: {{ chip.text }}</span>{% endfor %}
-    {% if reply.tools %}<span class="chip tools">⚙ {{ reply.tools | join(" · ") }}</span>{% endif %}
+{% from "_icons.html" import icon %}
+<div class="msg agent">
+  <span class="avatar small">C</span>
+  <div class="msg-body">
+    <div class="bubble">{% for paragraph in reply.paragraphs %}<p>{{ paragraph }}</p>{% endfor %}</div>
+    {% if reply.chips or reply.tools %}
+    <div class="chip-set">
+      {% for chip in reply.chips %}
+      {% if chip.kind == "clinic" %}<span class="chip success" title="Verified with the clinic">{{ icon("verified", 16) }}{{ chip.text }}</span>
+      {% else %}<span class="chip secondary" title="Something you said, not yet verified">{{ icon("chat", 16) }}{{ chip.text }}</span>{% endif %}
+      {% endfor %}
+      {% if reply.tools %}<span class="chip" title="Tools the assistant used">{{ icon("build", 16) }}<code>{{ reply.tools | join(", ") }}</code></span>{% endif %}
+    </div>
+    {% endif %}
   </div>
-  {% endif %}
 </div>
