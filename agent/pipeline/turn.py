@@ -11,7 +11,7 @@ from agent.pipeline.language import detect_language
 from agent.pipeline.planner import plan, regenerate
 from agent.pipeline.resolve_target import resolve_target
 from agent.pipeline.state import TurnState
-from agent.pipeline.status import deliver_notices, enforce_truth, status_recheck
+from agent.pipeline.status import deliver_notices, drop_repeated_prose, enforce_truth, status_recheck
 from agent.pipeline.sync import needs_sync, sync_customer
 from agent.repo import claims, messages, sessions
 
@@ -79,6 +79,7 @@ async def finish(state: TurnState) -> TurnResult:
     if state.injection and state.injection.bulk and state.writes == 0:
         state.add("refusal", "refusal.bulk")
     await enforce_truth(state, regenerate)
+    drop_repeated_prose(state, compose.system_text(state))
     if not state.segments and not state.prose.strip():
         state.add("info", "help.default")
     reply = compose.render(state)

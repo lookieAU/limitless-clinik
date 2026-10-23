@@ -6,7 +6,7 @@ from agent.pipeline.conflicts import candidate_dates, view
 from agent.pipeline.consent import violated_constraint
 from agent.pipeline.policy_gate import CLINIC_ERRORS, refresh_customer
 from agent.pipeline.state import TurnState
-from agent.pipeline.verify_reply import prose_violations, stale_bookings
+from agent.pipeline.verify_reply import prose_violations, repeats_system_lines, stale_bookings
 from agent.repo import claims, offers, verified
 from agent.tools.reads import option_list, refresh_booking
 from shared.time import parse_utc, to_local
@@ -76,6 +76,12 @@ async def deliver_notices(state: TurnState) -> None:
             row = verified.get(state.conn, notice["booking_id"])
             if row and row["status"] == "cancelled":
                 await rebooking_offers(state, row)
+
+
+def drop_repeated_prose(state: TurnState, system_text: str) -> None:
+    if state.prose.strip() and repeats_system_lines(state.prose, system_text):
+        state.log("prose_dropped", {"reason": "repeats_system_lines", "prose": state.prose})
+        state.prose = ""
 
 
 async def enforce_truth(state: TurnState, regenerate) -> None:

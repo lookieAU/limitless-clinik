@@ -7,6 +7,7 @@ Claim subjects and value formats:
 - date: YYYY-MM-DD, only for an explicit calendar date or a weekday explicitly tied to a week in ONE phrase
   ("next Thursday" or "Thursday next week" -> date). If the week and the day are said separately, emit a week claim
   and a separate day claim — never merge them.
+- Relative days ("today", "tomorrow", "आज", "kal") -> a date claim computed from today's date in context.
 - time_window: HH:MM for an exact time ("3pm" -> 15:00, "3 baje" -> 15:00), before_HH:MM / after_HH:MM for windows
   ("before noon" -> before_12:00, "morning" -> before_12:00, "afternoon" -> after_12:00)
 - doctor: a doctor id from the list given in context ("Dr A" -> dr_a)

@@ -97,6 +97,14 @@ def supersedes(old: ClaimView, new: ClaimView) -> bool:
     return old.value == new.value and new.polarity == "negative"
 
 
+REPLACES = {"date": ("day", "week", "date"), "day": ("date",), "week": ("date",)}
+
+
+def replaces_date(old: ClaimView, new: ClaimView) -> bool:
+    both_positive = old.polarity == "positive" and new.polarity == "positive"
+    return both_positive and old.subject in REPLACES.get(new.subject, ())
+
+
 def date_conflict(live: list[ClaimView], claim: ClaimView, today: date) -> Conflict | None:
     if claim.polarity != "positive" or claim.subject not in DATE_SUBJECTS:
         return None
@@ -133,10 +141,7 @@ def apply_claims(active: list[ClaimView], new: list[ClaimView], today: date, det
                     outcome.conflict = contradiction(old, claim)
                     detecting = False
                 continue
-            if supersedes(old, claim):
-                live.remove(old)
-                outcome.superseded.append((old.id, claim.id))
-            elif claim.subject == "date" and claim.polarity == "positive" and old.subject in ("day", "week") and old.polarity == "positive":
+            if supersedes(old, claim) or replaces_date(old, claim):
                 live.remove(old)
                 outcome.superseded.append((old.id, claim.id))
         live.append(claim)

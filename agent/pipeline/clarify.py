@@ -77,11 +77,24 @@ def pick(state: TurnState, data: dict) -> int | None:
     return hits[0] if len(hits) == 1 else None
 
 
+def moves_on(state: TurnState) -> bool:
+    new_request = state.extraction.intent in (Intent.BOOK, Intent.RESCHEDULE, Intent.CANCEL, Intent.STATUS)
+    return new_request and state.extraction.offer_choice is None and bool(state.new_claims or state.extraction.intent == Intent.STATUS)
+
+
 def resolve_pending(state: TurnState) -> bool | None:
     if state.session["state"] != "awaiting_clarification":
         return None
     data = sessions.state_data(state.session)
     index = pick(state, data)
+    if index is None and moves_on(state):
+        disputed = {claim_id for raw in data["options"] if isinstance(raw, dict) for claim_id in raw["keep"] + raw["drop"]}
+        for claim_id in disputed:
+            claims.supersede(state.conn, claim_id, "clarification_abandoned")
+        sessions.set_state(state.conn, state.session_id, "idle")
+        state.session["state"] = "idle"
+        state.log("clarification_abandoned", {"kind": data["kind"]})
+        return None
     if index is None:
         question = data["question"]
         state.add("question", question["key"], **question["params"])

@@ -10,6 +10,25 @@ STATUS_PATTERNS = (
 )
 
 
+CLOCK = re.compile(r"\b(\d{1,2}):(\d{2})\b")
+REF = re.compile(r"\b[A-Z]{2}-\d{4}\b", re.IGNORECASE)
+DOCTOR = re.compile(r"\bDr\.? [A-Z][a-z]+(?: [A-Z][a-z]+)?")
+ASKS_AGAIN = re.compile(r"\?|say yes|let me know if|हाँ कहें|बताइए", re.IGNORECASE)
+
+
+def anchors(text: str) -> set[str]:
+    clocks = {f"{int(hour)}:{minute}" for hour, minute in CLOCK.findall(text)}
+    return clocks | {ref.upper() for ref in REF.findall(text)}
+
+
+def repeats_system_lines(prose: str, system_text: str) -> bool:
+    if anchors(prose) & anchors(system_text):
+        return True
+    if any(name.lower() in prose.lower() for name in DOCTOR.findall(system_text)):
+        return True
+    return "?" in system_text and bool(ASKS_AGAIN.search(prose))
+
+
 def prose_violations(prose: str) -> list[str]:
     return [match.group(0) for pattern in STATUS_PATTERNS for match in pattern.finditer(prose)]
 

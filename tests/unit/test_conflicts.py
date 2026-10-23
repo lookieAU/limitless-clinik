@@ -56,3 +56,13 @@ def test_claims_after_a_conflict_still_supersede():
     outcome = apply_claims(active, [c(2, "week", "next_week"), c(3, "day", "thu"), c(4, "time_window", "15:00")], TODAY)
     assert outcome.conflict.kind == "ambiguous"
     assert ("c1", "c4") in outcome.superseded
+
+
+def test_new_day_replaces_an_older_date_without_a_question():
+    outcome = apply_claims([c(1, "date", "2026-11-02")], [c(2, "day", "fri"), c(3, "time_window", "before_12:00")], TODAY)
+    assert outcome.conflict is None and ("c1", "c2") in outcome.superseded
+
+
+def test_positive_after_negative_day_is_still_a_contradiction():
+    outcome = apply_claims([c(1, "day", "fri", "negative")], [c(2, "day", "fri")], TODAY)
+    assert outcome.conflict.kind == "contradiction"

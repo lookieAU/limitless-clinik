@@ -96,7 +96,14 @@ async def propose_slot(state: TurnState, args: dict) -> dict:
     check_constraints(state, observed[0])
     action = args.get("action") or ("reschedule" if state.target else "book")
     state.proposals.append((observed[0], action))
-    return {"ok": True, "offered": slot_id, "action": action, "note": "the system shows the offer; wait for the customer"}
+    summary = slot_summary(state, observed[0])
+    return {
+        "ok": True,
+        "offered": slot_id,
+        "action": action,
+        "shown_to_customer": f"{summary['doctor']} has {summary['when']} free. Shall I {action} it? Nothing changes until you say yes.",
+        "note": "The customer already sees this offer. Do not repeat the doctor, day or time. Say nothing, or one short reason.",
+    }
 
 
 async def get_booking(state: TurnState, args: dict) -> dict:
