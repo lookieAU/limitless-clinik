@@ -4,9 +4,9 @@ import os
 
 import httpx
 from livekit import agents
-from livekit.agents import Agent, AgentServer, AgentSession, ChatMessage, inference
+from livekit.agents import Agent, AgentServer, AgentSession, StopResponse, inference
 
-from agent.voice.bridge import VoiceBridge
+from agent.voice.bridge import VoiceBridge, handle_turn
 from agent.voice.token import AGENT_NAME
 
 AGENT_URL = os.environ.get("AGENT_URL", "http://agent:8000")
@@ -22,14 +22,9 @@ class ClinikVoice(Agent):
         super().__init__(instructions="Transport only: every reply comes from Clinik's turn pipeline.")
         self.bridge = bridge
 
-    async def llm_node(self, chat_ctx, tools, model_settings):
-        latest = next((item for item in reversed(chat_ctx.items) if isinstance(item, ChatMessage) and item.role == "user"), None)
-        if latest is None:
-            return
-        reply = await self.bridge.respond(latest.text_content or "", latest.transcript_confidence)
-        if reply.filler:
-            self.session.say(reply.filler, add_to_chat_ctx=False)
-        yield reply.text
+    async def on_user_turn_completed(self, turn_ctx, new_message) -> None:
+        await handle_turn(self.bridge, self.session.say, new_message.text_content or "", new_message.transcript_confidence)
+        raise StopResponse()
 
 
 server = AgentServer()

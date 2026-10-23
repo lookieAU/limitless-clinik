@@ -46,3 +46,23 @@ async def test_unknown_caller_falls_back_to_default_user(make_harness):
     bridge = VoiceBridge(client, "PA_random_identity")
     await bridge.login(fallback_user="u_ravi")
     assert bridge.user_id == "u_ravi"
+
+
+async def test_spoken_turn_says_filler_then_the_agent_reply(make_harness):
+    from agent.voice.bridge import handle_turn
+
+    harness = await make_harness(BOOK_THU)
+    bridge = await bridge_for(harness)
+    spoken = []
+    await handle_turn(bridge, lambda text, **kwargs: spoken.append(text), "Book me Thursday 3pm with Dr A.", 0.95)
+    assert spoken[0] == "One moment." and "CA-1003" in spoken[1]
+
+
+async def test_low_confidence_negation_is_asked_back_without_filler(make_harness):
+    from agent.voice.bridge import handle_turn
+
+    harness = await make_harness(NOT_FRIDAY)
+    bridge = await bridge_for(harness)
+    spoken = []
+    await handle_turn(bridge, lambda text, **kwargs: spoken.append(text), "Not Friday please", 0.4)
+    assert len(spoken) == 1 and "Is that right?" in spoken[0]

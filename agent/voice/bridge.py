@@ -1,3 +1,4 @@
+from collections.abc import Callable
 from dataclasses import dataclass
 
 import httpx
@@ -9,6 +10,7 @@ CONFIDENCE_FLOOR = 0.85
 YES = frozenset("yes yeah yep yup right correct sure haan haa ha ji sahi bilkul हाँ हां जी सही".split())
 GOODBYE = frozenset("bye goodbye thanks thank dhanyavaad dhanyawad shukriya अलविदा धन्यवाद शुक्रिया".split())
 FILLER = {"en": "One moment.", "hi": "एक पल।"}
+SORRY = {"en": "Sorry, I couldn't get that done just now. Please try again.", "hi": "माफ़ कीजिए, अभी यह नहीं हो पाया। कृपया दोबारा कोशिश करें।"}
 CONFIRM = {"en": "Just to be sure, you said: “{text}”. Is that right?", "hi": "पक्का कर लूँ, आपने कहा: “{text}”. सही है?"}
 
 
@@ -61,6 +63,11 @@ class VoiceBridge:
         response.raise_for_status()
         return VoiceReply(speakable(response.json()["reply"]), FILLER[lang])
 
+    def will_send(self, text: str, confidence: float | None) -> bool:
+        if self.pending and is_yes(text):
+            return True
+        return not needs_confirmation(text, confidence)
+
     async def respond(self, text: str, confidence: float | None = None) -> VoiceReply:
         if self.pending:
             original, self.pending = self.pending, None
@@ -70,3 +77,17 @@ class VoiceBridge:
             self.pending = text
             return VoiceReply(CONFIRM[detect_language(text)].format(text=text))
         return await self.send(text, recap=is_goodbye(text))
+
+
+async def handle_turn(bridge: VoiceBridge, say: Callable, text: str, confidence: float | None) -> None:
+    if not text.strip():
+        return
+    lang = detect_language(text)
+    if bridge.will_send(text, confidence):
+        say(FILLER[lang], add_to_chat_ctx=False)
+    try:
+        reply = await bridge.respond(text, confidence)
+    except httpx.HTTPError:
+        say(SORRY[lang])
+        return
+    say(reply.text)
